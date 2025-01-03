@@ -30,7 +30,7 @@ export const checkAuth = async (req, res) => {
             user: {
                 id: decoded.id,
                 email: decoded.email,
-             
+
             }
         });
     } catch (error) {
@@ -90,7 +90,7 @@ export const login = async (req, res) => {
         if (!user) {
             return res.status(401).json({ message: 'Usuario no encontrado' });
         }
-       
+
         // Comparar la contraseña proporcionada con la almacenada usando bcrypt
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
@@ -98,6 +98,7 @@ export const login = async (req, res) => {
         }
 
         // Crear el token de sesión (puedes usar JWT u otro mecanismo)
+        console.log(user)
         const sessionToken = jwt.sign(
             {
                 id: user._id,
