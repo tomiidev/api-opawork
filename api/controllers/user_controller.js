@@ -120,7 +120,7 @@ export const login = async (req, res) => {
             sameSite: "None",
             maxAge: 30 * 24 * 60 * 60 * 1000
         });
-
+        console.log(sessionToken)
         // Respuesta exitosa
         return res.status(200).json({ message: 'Login exitoso', user: user });
 
