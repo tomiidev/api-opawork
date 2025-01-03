@@ -20,8 +20,6 @@ export const register = async (req, res) => {
 // Inicio de sesión
 export const checkAuth = async (req, res) => {
     const token = req.cookies;
-    console.log(token);
-
     if (!token) {
         return res.status(401).json({ error: 'No autorizado' });
     }
@@ -81,13 +79,13 @@ export const login = async (req, res) => {
 
     try {
         const { email, password } = req.body;
-
+        console.log(email, password);
         // Verificar si se recibieron los datos necesarios
         if (!email || !password) {
             return res.status(400).json({ message: 'Correo y contraseña son requeridos' });
         }
         // Buscar al usuario por correo electrónico en la base de datos
-        const user = await userService.getUserById(email);  // Supongamos que esta función obtiene el usuario
+        const user = await userService.getUserByEmail(email);  // Supongamos que esta función obtiene el usuario
 
         if (!user) {
             return res.status(401).json({ message: 'Usuario no encontrado' });

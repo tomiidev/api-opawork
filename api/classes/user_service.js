@@ -3,7 +3,8 @@ import { clientDB } from "../../lib/database.js";
 
 class UserService {
   constructor() {
-    this.collection = clientDB.db("keplan").collection('user'); // Nombre de la colección de usuarios
+    this.collection = clientDB.db("tienda").collection('user'); // Nombre de la colección de usuarios
+   /*  this.collection = clientDB.db("keplan").collection('user'); // Nombre de la colección de usuarios */
   }
 
   async getAllProductsByUser(id) {
@@ -78,10 +79,10 @@ class UserService {
       }
     );
   }
-  async   getUserById(id) {
+  async getUserByEmail(email) {
 
     return this.collection.findOne(
-      { email: id }
+      { email: email }
     )
   }
   async postClient(id, client) {

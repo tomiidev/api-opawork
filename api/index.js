@@ -15,7 +15,7 @@ import cookieParser from "cookie-parser";
 config();
 
 const app = express();
-app.use(cors({ origin: "*", methods: "GET, POST, PUT, DELETE, OPTIONS", credentials: true }));
+app.use(cors({ origin: ["https://keplan-admin-oficial.vercel.app", "http://localhost:3000", "http://localhost:5173", "http://localhost:5174"], methods: "GET, POST, PUT, DELETE, OPTIONS", credentials: true }));
 /* app.options('*', cors()); */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -26,35 +26,7 @@ app.use((err, req, res, next) => {
     }
     next();
 });
-app.get("/", async (req, res) => {
-    try {
-        // Obtener `topic` desde query params o desde el cuerpo
-        const topic = req.query.topic || req.query.type || req.body.topic || req.body.type;
-        console.log({ topic });
-    
-        if (topic === "payment") {
-          // Obtener el ID del pago
-          const paymentId = req.query.id || req.query['data.id'] || req.body.id || req.body['data.id'];
-    
-          if (!paymentId) {
-            return res.status(400).json({ message: "Payment ID not provided" });
-          }
-    
-          // Buscar el estado del pago
-          const payment = await mercadopago.payment.findById(Number(paymentId));
-          const paymentStatus = payment.body.status;
-    
-          console.log({ payment, paymentStatus });
-    
-          res.status(200).json({ payment, paymentStatus });
-        } else {
-          res.status(400).json({ message: "Invalid topic" });
-        }
-      } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Internal Server Error", error: error.message });
-      }
-  });
+
 app.use('/api', userRoutes);
 app.use('/api', transaccionRoutes);
 app.use('/api', ordersRoutes);
