@@ -42,7 +42,7 @@ export const logout = async (req, res) => {
     res.clearCookie('sessionToken', {
         httpOnly: true,
         secure: true,
-        sameSite: 'strict',// pasar a otro val en prod
+        sameSite: 'Lax',// pasar a otro val en prod
         maxAge: 30 * 24 * 60 * 60 * 1000
     });
 
@@ -117,7 +117,7 @@ export const login = async (req, res) => {
         res.cookie('sessionToken', sessionToken, {
             httpOnly: true,
             secure: true, //cambiar a tru en prod,
-            sameSite: "None",
+            sameSite: "Lax",
             maxAge: 30 * 24 * 60 * 60 * 1000
         });
         console.log(sessionToken)
