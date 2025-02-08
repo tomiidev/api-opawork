@@ -92,7 +92,7 @@ export const logout = async (req, res) => {
         res.clearCookie('sessionToken', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',  // Asegurarse de usar 'secure' solo en producción
-            sameSite: 'Lax',  // Puedes cambiar este valor a 'Strict' en producción si es necesario
+            sameSite: 'Strict',  // Puedes cambiar este valor a 'Strict' en producción si es necesario
             maxAge: 0  // La cookie se eliminará inmediatamente
         });
 
@@ -227,7 +227,7 @@ export const login = async (req, res) => {
         res.cookie('sessionToken', sessionToken, {
             httpOnly: true,
             secure: true, //cambiar a tru en prod,
-            sameSite: "Lax",
+            sameSite: "Strict",
             maxAge: 30 * 24 * 60 * 60 * 1000
         });
         console.log(sessionToken)

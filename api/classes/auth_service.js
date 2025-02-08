@@ -52,7 +52,7 @@ class AuthService {
 
         // Generar y retornar el token JWT
         const sessionToken = jwt.sign(
-            { id: user._id, email: user.email, published_products: user.published_products },
+            { id: user._id, email: user.email},
             process.env.JWT_SECRET,
             { expiresIn: '30d' } // El token expirará en 30 días
         );
