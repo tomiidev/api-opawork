@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { checkAuth, getAllProductsById, login, logout, postClient, register, getClients, postRequestModuleUser, removeModuleUser, updateServiceDescription, updateServiceData, getProfile } from "../controllers/user_controller.js"
+import { checkAuth, getAllProductsById, login, logout,AddPaymentMethod, postClient, register, getClients, postRequestModuleUser, removeModuleUser, updateServiceDescription, updateServiceData, getProfile, getStores, getPaymentMethods, diagram } from "../controllers/user_controller.js"
 import multer from "multer";
 import path from 'path';
 const router = Router();
@@ -15,6 +15,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 // Registro de usuarios
 router.post('/create_account_with_email', register);
+router.post('/generar-diagrama', diagram);
 router.get('/own_store/:id', getAllProductsById)
 
 router.get('/get-profile', getProfile)
@@ -27,9 +28,12 @@ router.post('/update-service-data', /* authenticate */upload.single("service_pic
 router.get('/check-auth', /* authenticate */checkAuth);
 router.post('/logout', /* authenticate */logout);
 router.post('/add-client', /* authenticate */postClient);
+router.post('/add-payment-method', /* authenticate */AddPaymentMethod);
+router.get('/get-payments-methods', /* authenticate */getPaymentMethods);
 router.get('/clients', /* authenticate */getClients);
+router.get('/stores', /* authenticate */getStores);
 
-router.post('/api/logout', (req, res) => {
+/* router.post('/api/logout', (req, res) => {
     // Elimina la cookie de sesión
     res.clearCookie('sessionToken', {
         httpOnly: true,
@@ -39,7 +43,7 @@ router.post('/api/logout', (req, res) => {
 
     // Responde con un mensaje de éxito
     res.status(200).json({ message: 'Logout exitoso' });
-});
+}); */
 
 
 

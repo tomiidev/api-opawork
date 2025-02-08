@@ -3,8 +3,8 @@ import { clientDB } from "../../lib/database.js";
 
 class UserService {
   constructor() {
-    this.collection = clientDB.db("tienda").collection('user'); // Nombre de la colección de usuarios
-   /*  this.collection = clientDB.db("keplan").collection('user'); // Nombre de la colección de usuarios */
+    this.collection = clientDB.db("contygo").collection('user'); // Nombre de la colección de usuarios
+    /*  this.collection = clientDB.db("keplan").collection('user'); // Nombre de la colección de usuarios */
   }
 
   async getAllProductsByUser(id) {
@@ -31,6 +31,54 @@ class UserService {
       {
         $push: { modules: module }  // Añadir el módulo al array "modules"
       })
+  }
+  async updatePaymentMethods(decoded, methods) {
+    try {
+      // Usar el _id del usuario decodificado para encontrar al usuario en la base de datos
+      const userId = decoded.id;
+console.log(methods)
+      // Actualizamos la lista de métodos de pago del usuario
+      const result = await this.collection.updateOne(
+        { _id: new ObjectId(userId) },  // Filtrar por el ID del usuario
+        {
+          $set: { payment_methods: methods }  // Establecer la lista de métodos de pago
+        }
+      );
+
+      if (result.modifiedCount === 0) {
+        return { message: "No se actualizó ninguna categoría de métodos de pago." };
+      }
+
+      return { message: "Métodos de pago actualizados exitosamente." };
+    } catch (error) {
+      console.error('Error al actualizar los métodos de pago:', error);
+      throw new Error('Error al actualizar los métodos de pago');
+    }
+  }
+
+  async getPaymentMethods(decoded) {
+    try {
+      // Usar el _id del usuario decodificado para buscar al usuario en la base de datos
+      const userId = decoded.id;
+
+      // Buscar el documento del usuario en la colección
+      const user = await this.collection.findOne({ _id: new ObjectId(userId) });
+      console.log(user);
+      if (!user) {
+        return { message: "Usuario no encontrado." };
+      }
+
+      // Devolver los métodos de pago del usuario
+      return user; // Si no tiene métodos de pago, devolver un array vacío
+    } catch (error) {
+      console.error('Error al obtener los métodos de pago:', error);
+      throw new Error('Error al obtener los métodos de pago');
+    }
+  }
+
+  async getStores() {
+
+    return this.collection.find().toArray();
   }
   async updateServiceDescription(id, description) {
 

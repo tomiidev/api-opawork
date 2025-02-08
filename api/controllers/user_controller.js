@@ -6,7 +6,21 @@ import bcrypt from 'bcrypt';  // Importar bcrypt
 const authService = new AuthService();
 const userService = new UserService();
 import { uploadFileServiceToS3, uploadFileToS3 } from "../s3/s3.js"
+import { exec } from 'child_process';
+import path from 'path';
 // Registro de usuario
+export const getStores = async (req, res) => {
+    try {
+        const stores = await userService.getStores();
+        if (stores.length > 0) {
+
+            res.status(200).json({ data: stores });
+        }
+    } catch (error) {
+        console.error('Error al registrar usuario:', error);
+        res.status(400).json({ message: 'Error al registrar usuario' });
+    }
+};
 export const register = async (req, res) => {
     try {
         const token = await authService.register(req.body);
@@ -16,16 +30,44 @@ export const register = async (req, res) => {
         res.status(400).json({ message: 'Error al registrar usuario' });
     }
 };
+export const diagram = async (req, res) => {
+    try {
+        exec('python api/testpsyco.py', (error, stdout, stderr) => {
+            if (error) {
+              console.error(`exec error: ${error}`);
+              return res.status(500).send('Error al ejecutar el script Python.');
+            }
+        
+            if (stderr) {
+              console.error(`stderr: ${stderr}`);
+              return res.status(500).send('Error en la ejecución del script Python.');
+            }
+        
+            // Si todo va bien, tomamos la salida (stdout) que es el archivo CSV generado
+            // Creamos un stream para enviar el archivo como respuesta
+            const fileStream = new stream.PassThrough();
+            fileStream.end(stdout);  // Usamos stdout como el contenido del archivo
+        
+            // Configurar las cabeceras para la descarga del archivo
+            res.setHeader('Content-Type', 'image/png');
+            res.setHeader('Content-Disposition', 'attachment; filename="output_file.png"');
+            res.status(200).send(fileStream);  // Enviar el archivo al cliente
+          });
+    } catch (error) {
+        console.error('Error al registrar usuario:', error);
+        res.status(400).json({ message: 'Error al registrar usuario' });
+    }
+};
 
 // Inicio de sesión
 export const checkAuth = async (req, res) => {
-    const token = req.cookies;
+    const token = req.cookies.sessionToken; 
     if (!token) {
         return res.status(401).json({ error: 'No autorizado' });
     }
 
     try {
-        const decoded = jwt.verify(token.sessionToken, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         res.status(200).json({
             user: {
                 id: decoded.id,
@@ -39,16 +81,29 @@ export const checkAuth = async (req, res) => {
     }
 }
 export const logout = async (req, res) => {
-    res.clearCookie('sessionToken', {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'Lax',// pasar a otro val en prod
-        maxAge: 30 * 24 * 60 * 60 * 1000
-    });
+    const token = req.cookies.sessionToken;  // Accedemos directamente a 'sessionToken'
 
-    // Responde con un mensaje de éxito
-    res.status(200).json({ message: 'Logout exitoso' });
-}
+    try {
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+
+        // Limpiar la cookie 'sessionToken'
+        res.clearCookie('sessionToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',  // Asegurarse de usar 'secure' solo en producción
+            sameSite: 'Lax',  // Puedes cambiar este valor a 'Strict' en producción si es necesario
+            maxAge: 0  // La cookie se eliminará inmediatamente
+        });
+
+        // Responder con un mensaje de éxito
+        res.status(200).json({ message: 'Logout exitoso' });
+    } catch (error) {
+        console.error('Error al cerrar sesión:', error);
+        res.status(500).json({ error: 'Hubo un error al cerrar sesión. Intenta nuevamente.' });
+    }
+};
+
 export const getAllProductsById = async (req, res) => {
 
     try {
@@ -73,6 +128,60 @@ export const getAllProductsById = async (req, res) => {
         res.status(500).json({ message: 'Error al obtener los productos' });
     }
 };
+export const AddPaymentMethod = async (req, res) => {
+    const token = req.cookies?.sessionToken;
+
+    try {
+        // Verificamos si el token está presente
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+
+        // Decodificamos el token para obtener el _id del usuario
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Recibimos el método de pago (no un arreglo, sino un solo string)
+        const { methods } = req.body;
+        console.log(methods)
+        // Verificamos que se haya proporcionado un método de pago
+        if (!methods) {
+            return res.status(400).json({ message: 'Se requiere un método de pago.' });
+        }
+
+        // Llamamos al servicio para actualizar los métodos de pago
+        const updatedPaymentMethods = await userService.updatePaymentMethods(decoded, methods);
+
+        // Retornamos el resultado exitoso
+        return res.status(200).json({ data: updatedPaymentMethods, message: "Método de pago actualizado correctamente." });
+
+    } catch (error) {
+        console.error('Error al agregar los métodos de pago:', error);
+        res.status(500).json({ message: 'Error al agregar los métodos de pago' });
+    }
+};
+
+
+
+export const getPaymentMethods = async (req, res) => {
+    const token = req.cookies?.sessionToken;
+
+    try {
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        // Aquí almacenamos los métodos de pago para el usuario
+        const updatedPaymentMethods = await userService.getPaymentMethods(decoded);
+
+        return res.status(200).json({ data: updatedPaymentMethods, message: "Métodos de pago obtenidos correctamente." });
+
+    } catch (error) {
+        console.error('Error al agregar los métodos de pago:', error);
+        res.status(500).json({ message: 'Error al agregar los métodos de pago' });
+    }
+};
+
 
 
 export const login = async (req, res) => {
@@ -114,6 +223,7 @@ export const login = async (req, res) => {
         );
         console.log(user);
         // Configurar la cookie del token de sesión
+
         res.cookie('sessionToken', sessionToken, {
             httpOnly: true,
             secure: true, //cambiar a tru en prod,

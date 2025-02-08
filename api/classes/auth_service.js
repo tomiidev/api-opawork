@@ -4,27 +4,26 @@ import bcrypt from "bcrypt";
 
 class AuthService {
     constructor() {
-        this.collection = clientDB.db("tienda").collection('user'); // Nombre de la colección de usuarios
+        this.collection = clientDB.db("contygo").collection('user'); // Nombre de la colección de usuarios
        /*  this.collection = clientDB.db("keplan").collection('user'); // Nombre de la colección de usuarios */
     }
 
     // Registro de nuevo usuario
     async register(userData) {
-        const { email, con, name } = userData;
+        const { email, password, name } = userData;
 
         // Verificar si el usuario ya existe
         const existingUser = await this.collection.findOne({ email });
         if (existingUser) throw new Error('Usuario ya registrado con este email');
 
         // Hashear la contraseña antes de guardarla
-        const hashedPassword = await bcrypt.hash(con, 10);
+        const hashedPassword = await bcrypt.hash(password, 10);
 
         // Crear nuevo usuario
         const user = {
             email,
             password: hashedPassword,
             name,
-            type_plan: "plan-id-free",
             createdAt: new Date(),
         };
 

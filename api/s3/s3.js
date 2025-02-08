@@ -20,12 +20,18 @@ const client = new S3Client({
 });
 //v   pt      c                    
 
-export const uploadFileToS3 = async (file, data, categoria/* , product */) => {
-
+export const uploadFileToS3 = async (decoded, file, data, categoria/* , product */) => {
+    function sanitizeFileName(fileName) {
+        return fileName
+            .toLowerCase()                // Convierte todo a minúsculas
+            .replace(/ /g, '')           // Reemplaza espacios con guiones bajos
+            .replace(/-/g, '')            // Elimina guiones
+            .replace(/[^a-z0-9_.]/g, ''); // Elimina caracteres especiales, dejando solo letras, números, guiones bajos y puntos
+    }
     try {
 
         const stream = fs.createReadStream(file.path);
-        const key = file.originalname ? `${data.toLowerCase()}/${categoria.toLowerCase()}/${file.originalname.toLowerCase()}` : `${data.toLowerCase()}/${categoria.toLowerCase()}/${file.imagen.toLowerCase()}`;
+        const key = file.originalname ? `${decoded.id}/${data.toLowerCase()}/${categoria.toLowerCase()}/${sanitizeFileName(file.originalname.toLowerCase())}` : `${decoded.id}/${data.toLowerCase()}/${categoria.toLowerCase()}/${sanitizeFileName(file.imagen.toLowerCase())}`;
         const uploadParams = {
             Bucket: process.env.AWS_BUCKET_NAME,
             Key: key,
