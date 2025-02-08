@@ -14,7 +14,7 @@ import path from "path";
 config();
 
 const app = express();
-app.use(cors({ origin: ["https://admin.unabuenauy.com","https://signin.unabuenauy.com", "http://localhost:3000", "http://localhost:5173", "http://localhost:5174"], methods: "GET, POST, PUT, DELETE, OPTIONS", credentials: true }));
+app.use(cors({ origin: ["https://contygo.vercel.app", "http://localhost:5173"], methods: "GET, POST, PUT, DELETE, OPTIONS", credentials: true }));
 /* app.options('*', cors()); */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
