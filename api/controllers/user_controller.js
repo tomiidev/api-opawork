@@ -4,23 +4,14 @@ import UserService from '../classes/user_service.js';
 import bcrypt from 'bcrypt';  // Importar bcrypt
 // Crear instancia del servicio de autenticación
 const authService = new AuthService();
+const patService = new PatientService();
 const userService = new UserService();
 import { uploadFileServiceToS3, uploadFileToS3 } from "../s3/s3.js"
 import { exec } from 'child_process';
 import path from 'path';
+import PatientService from '../classes/categories_service.js';
 // Registro de usuario
-export const getStores = async (req, res) => {
-    try {
-        const stores = await userService.getStores();
-        if (stores.length > 0) {
 
-            res.status(200).json({ data: stores });
-        }
-    } catch (error) {
-        console.error('Error al registrar usuario:', error);
-        res.status(400).json({ message: 'Error al registrar usuario' });
-    }
-};
 export const register = async (req, res) => {
     try {
         const token = await authService.register(req.body);
@@ -34,25 +25,25 @@ export const diagram = async (req, res) => {
     try {
         exec('python api/testpsyco.py', (error, stdout, stderr) => {
             if (error) {
-              console.error(`exec error: ${error}`);
-              return res.status(500).send('Error al ejecutar el script Python.');
+                console.error(`exec error: ${error}`);
+                return res.status(500).send('Error al ejecutar el script Python.');
             }
-        
+
             if (stderr) {
-              console.error(`stderr: ${stderr}`);
-              return res.status(500).send('Error en la ejecución del script Python.');
+                console.error(`stderr: ${stderr}`);
+                return res.status(500).send('Error en la ejecución del script Python.');
             }
-        
+
             // Si todo va bien, tomamos la salida (stdout) que es el archivo CSV generado
             // Creamos un stream para enviar el archivo como respuesta
             const fileStream = new stream.PassThrough();
             fileStream.end(stdout);  // Usamos stdout como el contenido del archivo
-        
+
             // Configurar las cabeceras para la descarga del archivo
             res.setHeader('Content-Type', 'image/png');
             res.setHeader('Content-Disposition', 'attachment; filename="output_file.png"');
             res.status(200).send(fileStream);  // Enviar el archivo al cliente
-          });
+        });
     } catch (error) {
         console.error('Error al registrar usuario:', error);
         res.status(400).json({ message: 'Error al registrar usuario' });
@@ -61,7 +52,7 @@ export const diagram = async (req, res) => {
 
 // Inicio de sesión
 export const checkAuth = async (req, res) => {
-    const token = req.cookies.sessionToken; 
+    const token = req.cookies.sessionToken;
     if (!token) {
         return res.status(401).json({ error: 'No autorizado' });
     }
@@ -69,9 +60,15 @@ export const checkAuth = async (req, res) => {
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         res.status(200).json({
+            authenticated: true,
             user: {
                 id: decoded.id,
                 email: decoded.email,
+                photo: decoded.photo,
+                phone: decoded.phone,
+                name: decoded.name,
+                description: decoded.description,
+
 
             }
         });
@@ -92,7 +89,7 @@ export const logout = async (req, res) => {
         res.clearCookie('sessionToken', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',  // Asegurarse de usar 'secure' solo en producción
-            sameSite: 'Strict',  // Puedes cambiar este valor a 'Strict' en producción si es necesario
+            sameSite: 'Lax',  // Puedes cambiar este valor a 'Strict' en producción si es necesario
             maxAge: 0  // La cookie se eliminará inmediatamente
         });
 
@@ -126,6 +123,173 @@ export const getAllProductsById = async (req, res) => {
     } catch (error) {
         console.error('Error al obtener los productos:', error);
         res.status(500).json({ message: 'Error al obtener los productos' });
+    }
+};
+/* export const addPatient = async (req, res) => {
+    const token = req.cookies?.sessionToken;
+
+    try {
+        // Verificamos si el token está presente
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+
+        // Decodificamos el token para obtener el _id del usuario
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Recibimos el método de pago (no un arreglo, sino un solo string)
+        const { formData, bookingToAccept } = req.body;
+ 
+        // Verificamos que se haya proporcionado un método de pago
+        if (!formData || !bookingToAccept) {
+            return res.status(400).json({ message: 'Se requiere un paciente.' });
+        }
+
+        // Llamamos al servicio para actualizar los métodos de pago
+        if (bookingToAccept) {
+
+            const patients = await patService.addPatient(decoded, bookingToAccept);
+            return res.status(200).json({ data: patients, message: "Paciente agregado" });
+        }
+        else {
+            
+            const patients = await patService.addPatient(decoded, formData);
+            return res.status(200).json({ data: patients, message: "Paciente agregado" });
+        }
+
+        // Retornamos el resultado exitoso
+
+    } catch (error) {
+        console.error('Error al agregar los métodos de pago:', error);
+        res.status(500).json({ message: 'Error al agregar los métodos de pago' });
+    }
+}; */
+export const addPatient = async (req, res) => {
+    const token = req.cookies?.sessionToken;
+
+    try {
+        // Verificamos si el token está presente
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+
+        // Decodificamos el token para obtener el _id del usuario
+        let decoded;
+        try {
+            decoded = jwt.verify(token, process.env.JWT_SECRET);
+        } catch (error) {
+            return res.status(401).json({ error: 'Token inválido o expirado' });
+        }
+
+        // Recibimos los datos del paciente
+        const { formData, bookingToAccept } = req.body;
+
+        // Validación de los datos
+        if (!formData && !bookingToAccept) {
+            return res.status(400).json({ message: 'Se requiere un paciente.' });
+        }
+
+        // Seleccionamos qué dato usar
+        const patientData = bookingToAccept || formData;
+
+        // Llamamos al servicio
+        const patients = await patService.addPatient(decoded, patientData);
+
+        // Retornamos el resultado exitoso
+        return res.status(200).json({ data: patients, message: "Paciente agregado" });
+
+    } catch (error) {
+        console.error('Error al agregar paciente:', error);
+        res.status(500).json({ message: 'Error al agregar paciente' });
+    }
+};
+
+export const dPatient = async (req, res) => {
+    const token = req.cookies?.sessionToken;
+
+    try {
+        // Verificamos si el token está presente
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+
+        // Decodificamos el token para obtener el _id del usuario
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Recibimos el método de pago (no un arreglo, sino un solo string)
+        const { patientToDelete } = req.body;
+        console.log(patientToDelete)
+        // Verificamos que se haya proporcionado un método de pago
+        if (!patientToDelete) {
+            return res.status(400).json({ message: 'Se requiere un paciente.' });
+        }
+
+        // Llamamos al servicio para actualizar los métodos de pago
+        const patient = await patService.dPatient(decoded, patientToDelete);
+        if (patient.deletedCount > 0) {
+            // Retornamos el resultado exitoso
+            return res.status(200).json({ data: patient, message: "Paciente eliminado" });
+        }
+
+    } catch (error) {
+        console.error('Error al agregar los métodos de pago:', error);
+        res.status(500).json({ message: 'Error al agregar los métodos de pago' });
+    }
+};
+export const ePatient = async (req, res) => {
+    const token = req.cookies?.sessionToken;
+
+    try {
+        // Verificamos si el token está presente
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+
+        // Decodificamos el token para obtener el _id del usuario
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Recibimos el método de pago (no un arreglo, sino un solo string)
+        const { formData } = req.body;
+        console.log("paciente a editar"+ JSON.stringify(formData));
+        // Verificamos que se haya proporcionado un método de pago
+        if (!formData) {
+            return res.status(400).json({ message: 'Se requiere un paciente.' });
+        }
+
+        // Llamamos al servicio para actualizar los métodos de pago
+        const patients = await patService.editPatient(decoded, formData);
+
+        // Retornamos el resultado exitoso
+        return res.status(200).json({ data: patients, message: "Paciente editado" });
+
+    } catch (error) {
+        console.error('Error al agregar los métodos de pago:', error);
+        res.status(500).json({ message: 'Error al agregar los métodos de pago' });
+    }
+};
+export const getPatients = async (req, res) => {
+    const token = req.cookies?.sessionToken;
+
+    try {
+        // Verificamos si el token está presente
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+
+        // Decodificamos el token para obtener el _id del usuario
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+
+
+        // Llamamos al servicio para actualizar los métodos de pago
+        const patients = await patService.gPatients(decoded);
+        console.log(patients);
+        // Retornamos el resultado exitoso
+        return res.status(200).json({ data: patients, message: "Paciente agregado" });
+
+    } catch (error) {
+        console.error('Error al agregar los métodos de pago:', error);
+        res.status(500).json({ message: 'Error al agregar los métodos de pago' });
     }
 };
 export const AddPaymentMethod = async (req, res) => {
@@ -212,7 +376,10 @@ export const login = async (req, res) => {
             {
                 id: user._id,
                 email: user.email,
-
+                photo: user.photo,
+                name: user.name,
+                phone: user.phone,
+                description: user.description,
                 /*      nombre: user.nombre, */
                 // Puedes agregar más datos aquí si es necesario
             },
@@ -227,7 +394,7 @@ export const login = async (req, res) => {
         res.cookie('sessionToken', sessionToken, {
             httpOnly: true,
             secure: true, //cambiar a tru en prod,
-            sameSite: "Strict",
+            sameSite: "Lax",
             maxAge: 30 * 24 * 60 * 60 * 1000
         });
         console.log(sessionToken)
@@ -249,13 +416,10 @@ export const getProfile = async (req, res) => {
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await userService.getUserById(decoded.email)
+        const user = await userService.getUserByEmail(decoded.email)
         console.log(user)
         if (user) {
-            // En este punto, `req.user` contiene los datos del usuario autenticado
-            // Puedes usarlo para mostrar o procesar los datos del usuario
-            // Por ejemplo, si deseas mostrar su nombre en la vista:
-            // res.send(`Hola, ${req.user.nombre}!`);
+
             return res.status(200).json({ data: user });
         }
         else {
@@ -266,131 +430,108 @@ export const getProfile = async (req, res) => {
         res.status(500).json({ message: 'Error al obtener el perfil del usuario' });
     }
 };
-export const getClients = async (req, res) => {
+export const getUser = async (req, res) => {
     try {
-        const token = req.cookies?.sessionToken;
-        if (!token) {
-            return res.status(401).json({ error: 'No autorizado' });
+        const { id } = req.body
+        if (!id) {
+            return res.status(400).json({ message: 'Se requiere un id de usuario.' });
         }
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log(id)
 
+        const user = await userService.getUser(id)
 
-        // Realiza el aggregate para encontrar las compras del usuario
-        const clients = await userService.getClients(decoded.id)
-        if (clients) {
-            res.status(200).json({ data: clients });
-        } else {
-            res.status(404).json({ message: "error al crear transaccion" });
+        if (user) {
+            return res.status(200).json({ data: user });
+        }
+        else {
+            return res.status(404).json({ message: "No se encontró el usuario" });
         }
     } catch (error) {
-        console.error('Error al obtener los items:', error);
-        res.status(500).json({ message: 'Internal server error' });
+        console.error('Error al obtener el perfil:', error);
+        res.status(500).json({ message: 'Error al obtener el perfil del usuario' });
     }
 };
-export const postRequestModuleUser = async (req, res) => {
+
+
+export const uploadPhoto = async (req, res) => {
+    const token = req.cookies?.sessionToken;
     try {
-        const { module } = req.body
-        const token = req.cookies?.sessionToken;
+
+        const { files: image } = req;
+        console.log(image)
         if (!token) {
             return res.status(401).json({ error: 'No autorizado' });
         }
-        if (!module) {
-            return res.status(400).json({ message: 'Se requiere el modulo a solicitar.' });
+        if (!image) {
+            return res.status(400).json({ message: 'Se requiere una imagen.' });
         }
+
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
 
         // Realiza el aggregate para encontrar las compras del usuario
-        const moduleAdded = await userService.requestModuleUser(decoded.id, module)
-        if (moduleAdded) {
-            res.status(200).json({ data: moduleAdded });
-        } else {
-            res.status(404).json({ message: "error al solicitar modulo" });
-        }
-    } catch (error) {
-        console.error('Error al solicitar modulos:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-};
-export const removeModuleUser = async (req, res) => {
-    try {
-        const { module } = req.body
-        const token = req.cookies?.sessionToken;
-        if (!token) {
-            return res.status(401).json({ error: 'No autorizado' });
-        }
-        if (!module) {
-            return res.status(400).json({ message: 'Se requiere el modulo a solicitar.' });
-        }
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-
-        // Realiza el aggregate para encontrar las compras del usuario
-        const moduleAdded = await userService.removeModuleUser(decoded.id, module)
-        if (moduleAdded) {
-            res.status(200).json({ data: moduleAdded });
-        } else {
-            res.status(404).json({ message: "error al eliminar modulo" });
-        }
-    } catch (error) {
-        console.error('Error al eliminar modulos:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-};
-export const updateServiceDescription = async (req, res) => {
-    try {
-        const { service_description } = req.body
-        const token = req.cookies?.sessionToken;
-        if (!token) {
-            return res.status(401).json({ error: 'No autorizado' });
-        }
-        if (!service_description) {
-            return res.status(400).json({ message: 'Se requiere la desc a actualizar.' });
-        }
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-
-        // Realiza el aggregate para encontrar las compras del usuario
-        const descriptionUpdated = await userService.updateServiceDescription(decoded.id, service_description)
-        if (descriptionUpdated) {
-            res.status(200).json({ data: descriptionUpdated });
-        } else {
-            res.status(404).json({ message: "error al eliminar modulo" });
-        }
-    } catch (error) {
-        console.error('Error al eliminar modulos:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-};
-export const updateServiceData = async (req, res) => {
-    try {
-        const { service_experience, service_name } = req.body
-        const service_picture = req.file
-        console.log(service_picture, service_experience, service_name)
-        const token = req.cookies?.sessionToken;
-        if (!token) {
-            return res.status(401).json({ error: 'No autorizado' });
-        }
-        /*   if (!service_picture || !service_experience || !service_name) {
-              return res.status(400).json({ message: 'Se requiere la desc a actualizar.' });
-          } */
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const data = {
-            service_experience: service_experience,
-            service_name: service_name,
-            service_picture: service_picture.originalname
-        }
-
-        // Realiza el aggregate para encontrar las compras del usuario
-        const dataUpdated = await userService.updateServiceData(decoded.id, data)
+        const dataUpdated = await userService.uploadPicture(decoded, image)
         if (dataUpdated.acknowledged === true) {
-            await uploadFileServiceToS3(service_picture, decoded.id, data.service_name)
+            await uploadFileServiceToS3(decoded, image)
+            res.status(200).json({ message: 'Imagen subida correctamente.' });
         }
-        if (dataUpdated) {
-            res.status(200).json({ data: dataUpdated });
-        } else {
-            res.status(404).json({ message: "error al actualizar datos" });
+
+    } catch (error) {
+        console.error('Error al actualizar datos:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+export const uploadInformation = async (req, res) => {
+    const token = req.cookies?.sessionToken;
+    try {
+
+        const { body: formData } = req;
+        console.log(formData)
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
         }
+        if (!formData) {
+            return res.status(400).json({ message: 'Se requiere información.' });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+
+        // Realiza el aggregate para encontrar las compras del usuario
+        const dataUpdated = await userService.uploadInformation(decoded, formData)
+        if (dataUpdated.acknowledged === true) {
+
+            res.status(200).json({ message: 'informacion actualizada correctamente.' });
+        }
+
+    } catch (error) {
+        console.error('Error al actualizar datos:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+export const getInformation = async (req, res) => {
+    const token = req.cookies?.sessionToken;
+    try {
+
+        const { body: formData } = req;
+        console.log(formData)
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+        if (!formData) {
+            return res.status(400).json({ message: 'Se requiere información.' });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+
+        // Realiza el aggregate para encontrar las compras del usuario
+        const dataUpdated = await userService.uploadInformation(decoded, formData)
+        if (dataUpdated.acknowledged === true) {
+
+            res.status(200).json({ message: 'informacion actualizada correctamente.' });
+        }
+
     } catch (error) {
         console.error('Error al actualizar datos:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -398,47 +539,4 @@ export const updateServiceData = async (req, res) => {
 };
 
 // Actualizar perfil del usuario autenticado
-export const updateProfile = async (req, res) => {
-    try {
-        const updatedUser = await authService.updateUser(req.user.id, req.body); // `req.user.id` asume que el middleware JWT asigna `req.user`
-        res.status(200).json(updatedUser);
-    } catch (error) {
-        console.error('Error al actualizar el perfil:', error);
-        res.status(500).json({ message: 'Error al actualizar el perfil' });
-    }
-};
-export const postClient = async (req, res) => {
-    try {
-        const token = req.cookies?.sessionToken;
-        const { name, email, gender, city, phone } = req.body
-        if (!token) {
-            return res.status(401).json({ error: 'No autorizado' });
-        }
 
-        console.log(token);
-        // Decodificar el token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const client = {
-
-            /*   nombre: title, */
-            cliente: uid(),
-            nombre: name,
-            correo: email,
-            teléfono: phone,
-            género: gender,
-            ciudad: city,
-
-        }
-
-        // Realiza el aggregate para encontrar las compras del usuario
-        const inserted = await userService.postClient(decoded.id, client)
-        if (inserted) {
-            res.status(200).json({ data: inserted });
-        } else {
-            res.status(404).json({ message: "error al crear transaccion" });
-        }
-    } catch (error) {
-        console.error('Error al obtener los items:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-};

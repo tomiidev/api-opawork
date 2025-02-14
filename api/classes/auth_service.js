@@ -1,6 +1,7 @@
 import { clientDB } from "../../lib/database.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import mongoose from "mongoose";
 
 class AuthService {
     constructor() {
@@ -25,6 +26,7 @@ class AuthService {
             password: hashedPassword,
             name,
             createdAt: new Date(),
+        
         };
 
         // Guardar el usuario en la base de datos

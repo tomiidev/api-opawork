@@ -20,30 +20,50 @@ const client = new S3Client({
 });
 //v   pt      c                    
 
-export const uploadFileToS3 = async (decoded, file, data, categoria/* , product */) => {
+export const uploadFileToS3 = async (decoded, files) => {
+    console.log("Archivos recibidos:", JSON.stringify(files));
+
     function sanitizeFileName(fileName) {
         return fileName
-            .toLowerCase()                // Convierte todo a minúsculas
-            .replace(/ /g, '')           // Reemplaza espacios con guiones bajos
-            .replace(/-/g, '')            // Elimina guiones
-            .replace(/[^a-z0-9_.]/g, ''); // Elimina caracteres especiales, dejando solo letras, números, guiones bajos y puntos
+            .toLowerCase()
+            .replace(/ /g, '')  // Elimina espacios
+            .replace(/-/g, '')  // Elimina guiones
+            .replace(/[^a-z0-9_.]/g, ''); // Solo permite letras, números, _ y .
     }
-    try {
 
-        const stream = fs.createReadStream(file.path);
-        const key = file.originalname ? `${decoded.id}/${data.toLowerCase()}/${categoria.toLowerCase()}/${sanitizeFileName(file.originalname.toLowerCase())}` : `${decoded.id}/${data.toLowerCase()}/${categoria.toLowerCase()}/${sanitizeFileName(file.imagen.toLowerCase())}`;
-        const uploadParams = {
-            Bucket: process.env.AWS_BUCKET_NAME,
-            Key: key,
-            Body: stream,
-            ACL: 'public-read',
-        };
-        const command = new PutObjectCommand(uploadParams);
-        const result = await client.send(command);
-        console.log('Archivo subido:', result);
-        return result;
+    try {
+        if (!Array.isArray(files) || files.length === 0) {
+            throw new Error("No se han recibido archivos para subir.");
+        }
+
+        // Subir cada archivo y esperar a que todos se completen
+        const uploadResults = await Promise.all(
+            files.map(async (file) => {
+                const stream = fs.createReadStream(file.path);
+                const key = `${decoded.id}/${sanitizeFileName(file.originalname)}`;
+
+                const uploadParams = {
+                    Bucket: process.env.AWS_BUCKET_NAME,
+                    Key: key,
+                    Body: stream,
+                    ACL: "public-read",
+                };
+
+                const command = new PutObjectCommand(uploadParams);
+                const result = await client.send(command);
+                console.log(`Archivo subido: ${file.originalname}`, result);
+
+                return {
+                    originalName: file.originalname,
+                    s3Key: key,
+                    location: `https://${process.env.AWS_BUCKET_NAME}.s3.amazonaws.com/${decoded.id}${key}`,
+                };
+            })
+        );
+
+        return uploadResults;
     } catch (error) {
-        console.error('Error al subir archivo:', error);
+        console.error("Error al subir archivos:", error);
         throw error;
     }
 };
@@ -108,13 +128,13 @@ export const getObjectFromS3 = async (product, categoria, file) => {
         throw error;
     }
 }; */
-export const uploadFileServiceToS3 = async (file, user, service_name) => {
+export const uploadFileServiceToS3 = async (decoded, picture) => {
     try {
-        console.log(file);
-        const stream = fs.createReadStream(file.path);
+        console.log(picture);
+        const stream = fs.createReadStream(picture[0].path);
         const uploadParams = {
             Bucket: AWS_BUCKET_NAME,
-            Key: `${user}/${service_name}/${file.originalname}`,
+            Key: `${decoded.id}/foto/${picture[0].originalname}`,
             Body: stream,
             ACL: 'public-read',
         };

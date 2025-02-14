@@ -7,36 +7,12 @@ class UserService {
     /*  this.collection = clientDB.db("keplan").collection('user'); // Nombre de la colección de usuarios */
   }
 
-  async getAllProductsByUser(id) {
 
-    return this.collection.aggregate([
-      {
-        $match: {
-          _id: new ObjectId(id),  // Buscar al usuario por ID
-        }
-      },
-      {
-        $lookup: {
-          from: "product",  // Conectar con la colección de productos
-          localField: "_id",  // El campo en la colección de usuario
-          foreignField: "user_id",  // El campo en la colección de productos que referencia al usuario
-          as: "product_details"  // Los productos se almacenan en el campo `product_details`
-        }
-      }
-    ]).toArray();
-  }
-  async requestModuleUser(id, module) {
-
-    return this.collection.insertOne({ _id: new ObjectId(id) },  // Filtrar por ID
-      {
-        $push: { modules: module }  // Añadir el módulo al array "modules"
-      })
-  }
   async updatePaymentMethods(decoded, methods) {
     try {
       // Usar el _id del usuario decodificado para encontrar al usuario en la base de datos
       const userId = decoded.id;
-console.log(methods)
+      console.log(methods)
       // Actualizamos la lista de métodos de pago del usuario
       const result = await this.collection.updateOne(
         { _id: new ObjectId(userId) },  // Filtrar por el ID del usuario
@@ -55,6 +31,7 @@ console.log(methods)
       throw new Error('Error al actualizar los métodos de pago');
     }
   }
+
 
   async getPaymentMethods(decoded) {
     try {
@@ -76,21 +53,7 @@ console.log(methods)
     }
   }
 
-  async getStores() {
 
-    return this.collection.find().toArray();
-  }
-  async updateServiceDescription(id, description) {
-
-    return this.collection.updateOne(
-      { _id: new ObjectId(id) },  // Filtrar por ID
-      {
-        $set: {
-          'service.description': description  // Actualizar solo la descripción del servicio
-        }
-      }
-    );
-  }
   async updateServiceData(id, data) {
     // Inicializamos un objeto vacío para almacenar solo los campos válidos
     const updateFields = {};
@@ -118,19 +81,17 @@ console.log(methods)
       { $set: updateFields }      // Solo actualiza los campos válidos
     );
   }
-  async removeModuleUser(id, module) {
 
-    return this.collection.updateOne(
-      { _id: new ObjectId(id) },  // Filtrar por ID
-      {
-        $pull: { modules: module }  // Eliminar el módulo del array "modules"
-      }
-    );
-  }
-  async getUserByEmail(email) {
+  async   getUserByEmail(email) {
 
     return this.collection.findOne(
       { email: email }
+    )
+  }
+  async   getUser(form) {
+
+    return this.collection.findOne(
+      { _id: new ObjectId(form) }
     )
   }
   async postClient(id, client) {
@@ -166,6 +127,48 @@ console.log(methods)
     }
 
   }
+  async uploadPicture(decoded, picture) {
+    function sanitizeFileName(fileName) {
+      return fileName
+          .toLowerCase()
+          .replace(/ /g, '')  // Elimina espacios
+          .replace(/-/g, '')  // Elimina guiones
+          .replace(/[^a-z0-9_.]/g, ''); // Solo permite letras, números, _ y .
+  }
+    try {
+      // Insertamos la transacción asociada al user_id
+      const result = this.collection.updateOne(
+        { _id: new ObjectId(decoded.id) }, // ✅ Filtro correcto
+        { $set: { photo: sanitizeFileName(picture[0].originalname) } } // ✅ Actualización correcta
+      );
+      
+
+      return result;
+    } catch (error) {
+      console.error("Error al insertar el cliente:", error);
+      throw error; // Propagamos el error para manejarlo fuera de la función si es necesario
+    }
+
+  }
+  async uploadInformation(decoded, info) {
+    try {
+      console.log(info)
+      // Construimos dinámicamente el objeto de actualización
+      let updateFields = { phone: info.phone, description: info.description, email: info.email, name: info.name, especiality: info.especiality, modality: info.modality }
+  
+      // Realizamos la actualización en la base de datos
+      const result = await this.collection.updateOne(
+        { _id: new ObjectId(decoded.id) }, // ✅ Filtro correcto
+        { $set: updateFields }  // ✅ Actualización condicionada
+      );
+  
+      return result;
+    } catch (error) {
+      console.error("Error al actualizar la información:", error);
+      throw error; // Propagamos el error para manejarlo externamente
+    }
+  }
+  
 }
 
 export default UserService
