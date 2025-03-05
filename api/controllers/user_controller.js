@@ -437,7 +437,8 @@ export const login = async (req, res) => {
             httpOnly: true,
             secure: true, //cambiar a tru en prod,
             sameSite: "None",
-            path: ".opawork.app",
+            domain: ".opawork.app", // Habilita el uso en todos los subdominios
+            path: "/", // Disponible en todas las rutas
             maxAge: 30 * 24 * 60 * 60 * 1000
         });
         console.log(sessionToken)
