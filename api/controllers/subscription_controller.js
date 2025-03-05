@@ -20,7 +20,7 @@ export const generateLink = async (req, res) => {
         const payment = new Preference(clientMP);
 
         const URL = "https://www.opawork.app";
-        const URL_back = "http://localhost:5174";
+        const URL_back = "http://localhost:5173";
         /*   const URL = "https://ecommerce-gabriela.vercel.app"; */
         console.log("form" + JSON.stringify(formData))
         const preference =
@@ -35,10 +35,10 @@ export const generateLink = async (req, res) => {
             ],
             auto_return: "approved",
             back_urls: {
-                success: `${URL_back}`,
-                failure: `${URL_back}`,
+                success: `${URL}`,
+                failure: `${URL}`,
             },
-            notification_url: `${URL_back}`,
+            notification_url: `${URL}`,
             statement_descriptor: formData.descriptor,
             payment_methods: {
                 installments: 12
