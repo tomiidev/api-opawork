@@ -127,7 +127,8 @@ export const logout = async (req, res) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',  // Asegurarse de usar 'secure' solo en producción
             sameSite: "None",
-            path: "/",
+            domain: ".opawork.app", // Habilita el uso en todos los subdominios
+            path: "/", // Disponible en todas las rutas
             maxAge: 0  // La cookie se eliminará inmediatamente
         });
 
