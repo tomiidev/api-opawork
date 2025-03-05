@@ -4,7 +4,7 @@ import axios from "axios";
 import PaymentService from "../classes/subscription_service.js";
 import { MercadoPagoConfig, Preference } from "mercadopago";
 const pService = new PaymentService();
-const clientMP = new MercadoPagoConfig({ accessToken: 'APP_USR-735222292478455-030422-d233044941c5f1717f4655e0e26139dc-1187609678' });
+const clientMP = new MercadoPagoConfig({ accessToken: 'APP_USR-4871368307536482-030422-e18f66d0577928a3700b2f2f66b1e064-1246340668' });
 
 
 export const generateLink = async (req, res) => {
