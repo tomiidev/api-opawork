@@ -1,11 +1,188 @@
 import jwt from "jsonwebtoken"
-import SubscriptionService from '../classes/subscription_service.js';
-import PayPalClient from "../paypal/paypal.js"
 import { ObjectId } from "mongodb";
 import axios from "axios";
-const subscriptionService = new SubscriptionService();
+import PaymentService from "../classes/subscription_service.js";
+import { MercadoPagoConfig, Preference } from "mercadopago";
+const pService = new PaymentService();
+const clientMP = new MercadoPagoConfig({ accessToken: 'APP_USR-1958261565860748-030421-61bc0b9d004d69890513c2a899035a04-360175350' });
 
-// Registro de usuario
+
+export const generateLink = async (req, res) => {
+    const token = req.cookies?.sessionToken;
+
+    try {
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const { formData } = req.body
+
+        const payment = new Preference(clientMP);
+
+        const URL = "https://www.opawork.app";
+        const URL_back = "http://localhost:5174";
+        /*   const URL = "https://ecommerce-gabriela.vercel.app"; */
+        console.log("form" + JSON.stringify(formData))
+        const preference =
+        {
+            items: [
+                {
+                    title: "Psicología",
+                    quantity: Number(formData.sessions), // Asegurar número
+                    unit_price: Number(formData.price), // Asegurar número
+
+                }
+            ],
+            auto_return: "approved",
+            back_urls: {
+                success: `${URL_back}`,
+                failure: `${URL_back}`,
+            },
+            notification_url: `${URL_back}`,
+            statement_descriptor: formData.descriptor,
+            payment_methods: {
+                installments: 12
+            },
+
+            /*  additional_info: order.notes,
+             coupon_code: order.cupon_code, */
+            payer: {
+
+                name: formData.patientName,
+                /*  email: order.email, */
+                /*   phone: {
+                      number: order.phone
+                  }, */
+                date_created: formData.date,
+
+            },
+        }
+        payment.create({ body: preference })
+            .then(async (response) => {
+                try {
+                    // Extraer el sandbox_init_point
+                    const sandbox_init_point = response.sandbox_init_point;
+                    console.log('Sandbox Init Point:', response);
+
+
+
+                    // Responder con el sandbox_init_point o realizar otra acción
+                    return res.status(200).json({
+                        message: 'Orden creada con éxito.',
+                        sandbox_init_point: sandbox_init_point,
+                    });
+                } catch (error) {
+                    console.error('Error al procesar la creación de la orden:', error);
+                    return res.status(500).json({
+                        message: 'Hubo un problema al crear la orden.',
+                    });
+                }
+            })
+            .catch((error) => {
+                console.error('Error al crear el pago:', error);
+                return res.status(500).json({
+                    message: 'Hubo un problema al procesar el pago.',
+                });
+            });
+
+
+
+
+
+    } catch (error) {
+        console.error('Error al agregar los métodos de pago:', error);
+        res.status(500).json({ message: 'Error al agregar los métodos de pago' });
+    }
+};
+
+
+
+
+
+export const registerPayment = async (req, res) => {
+    const paymentData = req.body;
+    console.log("Datos del pago recibidos:", paymentData);
+
+    if (paymentData.status === "approved") {
+        const paymentDone = new Preference(clientMP)
+        const preferenceItems = paymentDone.get({ preferenceId: paymentData.preference_id })
+        const order = {
+            items: (await preferenceItems).items,
+            buyer: (await preferenceItems).payer,
+            date: (await preferenceItems).date_created,
+            /*     notes: (await preferenceItems).notes, */
+            /*       additional_info: (await preferenceItems).additional_info,
+                  cupon_code: (await preferenceItems).coupon_code, */
+
+        }
+        console.log(JSON.stringify(order))
+        const createdOrder = await pService.createPayment(order);
+        const res = await sumSells(order)
+        //    await send(order)
+        if (!createdOrder || !res) {
+            console.error('Error al crear la orden en la base de datos');
+            return res.status(500).json({
+                message: 'No se pudo crear la orden. Inténtalo de nuevo más tarde.',
+            });
+        }
+        // Aquí iría tu lógica para registrar la compra
+        // Por ejemplo: guardar en la base de datos
+        console.log("Pago aprobado, registrando en la base de datos...");
+
+    } else {
+        console.log("Pago no aprobado, ignorando...");
+        res.status(400).json({ message: "Pago no válido" });
+    }
+}
+
+
+export const getPayments = async (req, res) => {
+    const token = req.cookies?.sessionToken;
+
+    try {
+        // Verificamos si el token está presente
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+
+        // Decodificamos el token para obtener el _id del usuario
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+
+
+
+        // Llamamos al servicio para actualizar los métodos de pago
+        const result = await pService.getPayments(decoded);
+
+        if (result.length < 0) {
+            return res.status(400).json({ data: [], message: "No hay pagos registrados" });
+        }
+        if (result.length > 0) {
+            return res.status(200).json({ data: result, message: "Pagos obtenidos" });
+        }
+
+
+    } catch (error) {
+        console.error('Error al agregar los métodos de pago:', error);
+        res.status(500).json({ message: 'Error al agregar los métodos de pago' });
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 export const captureSubscription = async (req, res) => {
     try {
         const { subscription_id, token, planId } = req.body; // Extrae subscription_id, token, planId del body
