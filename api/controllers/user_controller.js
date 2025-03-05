@@ -10,8 +10,18 @@ import { uploadFileServiceToS3, uploadFileToS3 } from "../s3/s3.js"
 import { exec } from 'child_process';
 import path from 'path';
 import PatientService from '../classes/categories_service.js';
+import { sendEmailWithCredentialToPatient } from '../nodemailer/config.js';
+import { generatePassword } from '../lib/generate.js';
 // Registro de usuario
 
+export const freePlan = async (req, res) => {
+    try {
+        const updatedCount = await userService.updateFreePlan()
+        res.json({ message: "Suscripciones actualizadas.", updatedCount });
+    } catch (error) {
+        res.status(500).json({ message: "Error actualizando suscripciones", error });
+    }
+};
 export const register = async (req, res) => {
     try {
         const token = await authService.register(req.body);
@@ -61,6 +71,7 @@ export const checkAuth = async (req, res) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         res.status(200).json({
             authenticated: true,
+            freePlan: decoded.freePlan,
             user: {
                 id: decoded.id,
                 email: decoded.email,
@@ -69,6 +80,32 @@ export const checkAuth = async (req, res) => {
                 name: decoded.name,
                 description: decoded.description,
 
+
+
+            }
+        });
+    } catch (error) {
+        console.error('Error verifying token:', error);
+        res.status(401).json({ error: 'No autorizado' });
+    }
+}
+export const checkAuthPatientCredentials = async (req, res) => {
+    const token = req.cookies.sessionToken;
+    if (!token) {
+        return res.status(401).json({ error: 'No autorizado' });
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        res.status(200).json({
+            authenticated: true,
+            user: {
+                id: decoded.id,
+                email: decoded.email,
+                forcePasswordChange: decoded.forcePasswordChange,
+                phone: decoded.phone,
+                name: decoded.name,
+                psycoId: decoded.userId,
 
             }
         });
@@ -191,9 +228,12 @@ export const addPatient = async (req, res) => {
 
         // Seleccionamos qué dato usar
         const patientData = bookingToAccept || formData;
+        const tempPassword = generatePassword();
+        const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
+        await sendEmailWithCredentialToPatient(patientData, hashedPassword)
         // Llamamos al servicio
-        const patients = await patService.addPatient(decoded, patientData);
+        const patients = await patService.addPatient(decoded, patientData, hashedPassword);
 
         // Retornamos el resultado exitoso
         return res.status(200).json({ data: patients, message: "Paciente agregado" });
@@ -226,7 +266,7 @@ export const dPatient = async (req, res) => {
 
         // Llamamos al servicio para actualizar los métodos de pago
         const patient = await patService.dPatient(decoded, patientToDelete);
-        if (patient.deletedCount > 0) {
+        if (patient.patientDeleted.deletedCount > 0) {
             // Retornamos el resultado exitoso
             return res.status(200).json({ data: patient, message: "Paciente eliminado" });
         }
@@ -250,7 +290,7 @@ export const ePatient = async (req, res) => {
 
         // Recibimos el método de pago (no un arreglo, sino un solo string)
         const { formData } = req.body;
-        console.log("paciente a editar"+ JSON.stringify(formData));
+        console.log("paciente a editar" + JSON.stringify(formData));
         // Verificamos que se haya proporcionado un método de pago
         if (!formData) {
             return res.status(400).json({ message: 'Se requiere un paciente.' });
@@ -378,6 +418,7 @@ export const login = async (req, res) => {
                 email: user.email,
                 photo: user.photo,
                 name: user.name,
+                freePlan: user.freePlan,
                 phone: user.phone,
                 description: user.description,
                 /*      nombre: user.nombre, */

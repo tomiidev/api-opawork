@@ -1,17 +1,27 @@
 import { ObjectId } from "mongodb";
 import { clientDB } from "../../lib/database.js";
 
-class SubscriptionService {
+class PaymentService {
     constructor() {
-        this.collection = clientDB.db("keplan").collection('subscription'); // Nombre de la colección de usuarios
+        this.collection = clientDB.db("contygo").collection('payment'); // Nombre de la colección de usuarios
     }
 
-    async createSubscription(newSubscription) {
+    async createPayment(newPayment) {
         // Buscar usuario por email
-        const subscription = await this.collection.insertOne(newSubscription);
-        if (!subscription) throw new Error('subscription no creada');
+        const subscription = await this.collection.insertOne(newPayment);
+        if (!subscription) throw new Error('Pago no creado');
 
         return subscription
+    }
+    async getPayments(id) {
+        // Buscar usuario por email
+        const result = await this.collection.find({ user_id: new ObjectId(id) }).toArray()
+        if (result.length < 0){
+            return { message: "No se encontraron pagos." };
+        }
+        return result
+         
+
     }
     async getSuscription(id) {
         // Buscar usuario por email
@@ -21,4 +31,4 @@ class SubscriptionService {
     }
 }
 
-export default SubscriptionService;
+export default PaymentService;

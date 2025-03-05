@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { checkAuth, getAllProductsById, login, logout,AddPaymentMethod, register, getProfile, getPaymentMethods, diagram, getPatients, addPatient, ePatient, dPatient, uploadPhoto, uploadInformation, getUser } from "../controllers/user_controller.js"
+import { checkAuth, getAllProductsById, login, logout,AddPaymentMethod, register, getProfile, getPaymentMethods, diagram, getPatients, addPatient, ePatient, dPatient, uploadPhoto, uploadInformation, getUser, checkAuthPatientCredentials } from "../controllers/user_controller.js"
 import multer from "multer";
 import path from 'path';
 const router = Router();
@@ -37,6 +37,7 @@ router.post('/sign_in_with_email', /* authenticate */login);
 
 
 router.get('/check-auth', /* authenticate */checkAuth);
+router.get('/checkpatients-auth', /* authenticate */checkAuthPatientCredentials);
 router.get('/get-patients', /* authenticate */getPatients);
 router.post('/add-patient', /* authenticate */addPatient);
 router.post('/edit-patient', /* authenticate */ePatient);
@@ -45,6 +46,7 @@ router.post('/logout', /* authenticate */logout);
 
 router.post('/add-payment-method', /* authenticate */AddPaymentMethod);
 router.get('/get-payments-methods', /* authenticate */getPaymentMethods);
+router.get('/updatefreeplan', /* authenticate */getPaymentMethods);
 
 
 

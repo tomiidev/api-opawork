@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { captureSubscription, createSubscription ,cancelSubscription} from '../controllers/subscription_controller.js';
+import { captureSubscription ,cancelSubscription, generateLink, registerPayment, getPayments} from '../controllers/subscription_controller.js';
 /* import checkPermission from '../middlewares/checkPermission.js';
  */
 const router = Router();
@@ -10,7 +10,9 @@ const router = Router();
 // Obtener todos los productos
 
 // Obtener un producto por ID
-router.post('/create_subscription', createSubscription);
+router.post('/upload-payment', generateLink);
+router.post('/register-payment', registerPayment);
+router.get('/get-payments', getPayments);
 router.post('/capture_subscription', captureSubscription);
 router.post('/cancel_subscription', cancelSubscription);
 

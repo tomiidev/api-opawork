@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken"
 import ResourcetService from "../classes/resources_service.js";
 import { uploadFileToS3 } from "../s3/s3.js";
-import { send } from "../nodemailer/config.js";
+import { sendEmail } from "../nodemailer/config.js";
 const rService = new ResourcetService()
 // Registro de usuario
 
@@ -96,6 +96,33 @@ export const gPatientResources = async (req, res) => {
         res.status(500).json({ message: 'Error al agregar los métodos de pago' });
     }
 };
+export const gPatientOwnResources = async (req, res) => {
+    const token = req.cookies?.sessionToken;
+
+    try {
+        // Verificamos si el token está presente
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+
+        // Decodificamos el token para obtener el _id del usuario
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+
+
+
+        // Llamamos al servicio para actualizar los métodos de pago
+        const r = await rService.getPatientsOwnResources(decoded);
+        if (r.length > 0) {
+            console.log(r)
+            return res.status(200).json({ data: r, message: "Archivos obtenidos" });
+        }
+
+    } catch (error) {
+        console.error('Error al agregar los métodos de pago:', error);
+        res.status(500).json({ message: 'Error al agregar los métodos de pago' });
+    }
+};
 export const shareResource = async (req, res) => {
     const token = req.cookies?.sessionToken;
 
@@ -104,9 +131,9 @@ export const shareResource = async (req, res) => {
         if (!token) {
             return res.status(401).json({ error: 'No autorizado' });
         }
-        const { patient, resource } = req.body;
-        console.log(patient, resource);
-        if (!patient || !resource) {
+        const { send, resource } = req.body;
+        console.log(send, resource);
+        if (!send || !resource) {
             return res.status(400).json({ message: "Faltan datos: paciente o recurso no proporcionados" });
         }
         // Decodificamos el token para obtener el _id del usuario
@@ -116,11 +143,11 @@ export const shareResource = async (req, res) => {
 
 
         // Llamamos al servicio para actualizar los métodos de pago
-        const result = await rService.shareResources(decoded, patient, resource);
+        const result = await rService.shareResources(decoded, send, resource);
         const r = await rService.getResourceById(decoded, resource);
         console.log(r)
-        if (result && r._id) {
-            await send(decoded,patient, r)
+        if (result.modifiedCount > 0 && r._id) {
+            await sendEmail(decoded, send, r)
             return res.status(200).json({ data: result, message: "Archivo compartido" });
         }
 

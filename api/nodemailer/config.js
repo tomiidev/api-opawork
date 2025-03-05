@@ -157,8 +157,8 @@ function generarHTMLOrden(order) {
 
 
 // Función para enviar el correo electrónico
-export async function send(decoded,patient, resource) {
-    console.log(patient, resource);
+export async function sendEmail(decoded,send, resource) {
+    console.log(send, resource);
     try {
         // Crear transportador de nodemailer
         const transporter = await createTransporter();
@@ -169,8 +169,8 @@ export async function send(decoded,patient, resource) {
 
         // Generar HTML con el enlace enmascarado
         const html = `
-            <p>Hola ${patient.nombre},</p>
-            <p>Quiero compartir algo contigo. Puedes verlo aquí:</p>
+            <p>Hola ${send.name},</p>
+            <p>${send.message}</p>
             <p><a href="${link}" target="_blank" style="color: #007bff; text-decoration: none;">${displayText}</a></p>
             <p>¡Espero que te sea útil!</p>
         `;
@@ -178,8 +178,33 @@ export async function send(decoded,patient, resource) {
         // Opciones de correo
         const mailOptions = {
             from: process.env.MAIL_USERNAME,
+            to: send.email,
+            subject: send.subject,
+            html
+        };
+
+        // Enviar correo
+        const info = await transporter.sendMail(mailOptions);
+        console.log("Correo enviado:", info.messageId);
+    } catch (error) {
+        console.error("Error al enviar el correo:", error);
+        throw new Error("Error al enviar el correo");
+    }
+}
+export async function sendEmailWithCredentialToPatient(patient,tempPassword) {
+
+    try {
+        // Crear transportador de nodemailer
+    
+        const transporter = await createTransporter();  
+        // Generar HTML con el enlace enmascarado
+        const html = `Hola ${patient.name},\n\nTu usuario es: ${patient.email}\nTu contraseña temporal es: "${tempPassword}"\n\n (excluyendo las comillas). Por favor, inicia sesión y cambia tu contraseña.`
+
+        // Opciones de correo
+        const mailOptions = {
+            from: process.env.MAIL_USERNAME,
             to: patient.email,
-            subject: "Quiero compartir esto contigo!",
+            subject: "Credenciales de uso",
             html
         };
 

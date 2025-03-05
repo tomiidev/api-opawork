@@ -6,7 +6,7 @@ import mongoose from "mongoose";
 class AuthService {
     constructor() {
         this.collection = clientDB.db("contygo").collection('user'); // Nombre de la colección de usuarios
-       /*  this.collection = clientDB.db("keplan").collection('user'); // Nombre de la colección de usuarios */
+        /*  this.collection = clientDB.db("keplan").collection('user'); // Nombre de la colección de usuarios */
     }
 
     // Registro de nuevo usuario
@@ -25,8 +25,9 @@ class AuthService {
             email,
             password: hashedPassword,
             name,
+            freePlan: true,
             createdAt: new Date(),
-        
+
         };
 
         // Guardar el usuario en la base de datos
@@ -54,7 +55,7 @@ class AuthService {
 
         // Generar y retornar el token JWT
         const sessionToken = jwt.sign(
-            { id: user._id, email: user.email},
+            { id: user._id, email: user.email, freePlan: user.freePlan },
             process.env.JWT_SECRET,
             { expiresIn: '30d' } // El token expirará en 30 días
         );

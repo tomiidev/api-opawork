@@ -1,8 +1,8 @@
 
 import { deleteFileFromS3, getObjectFromS3, uploadFileToS3 } from "../s3/s3.js"
 import jwt from "jsonwebtoken"
-
-import { send, stateOrderNotify } from '../nodemailer/config.js';
+/* 
+import { send, stateOrderNotify } from '../nodemailer/config.js'; */
 import AppointmentService from '../classes/product_service.js';
 const appointmentService = new AppointmentService();
 
@@ -69,6 +69,39 @@ export const editAppointment = async (req, res) => {
         res.status(500).json({ message: 'Error al agregar los métodos de pago' });
     }
 };
+export const editOwnAppointment = async (req, res) => {
+    const token = req.cookies?.sessionToken;
+
+    try {
+        // Verificamos si el token está presente
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+
+        // Decodificamos el token para obtener el _id del usuario
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Recibimos el método de pago (no un arreglo, sino un solo string)
+        const { formData } = req.body;
+        console.log(formData)
+        // Verificamos que se haya proporcionado un método de pago
+        if (!formData) {
+            return res.status(400).json({ message: 'Se requiere una cita.' });
+        }
+
+        // Llamamos al servicio para actualizar los métodos de pago
+        const citas = await appointmentService.editOwnAppointment(decoded, formData);
+        if (citas.modifiedCount > 0) {
+            console.log(citas)
+            // Retornamos el resultado exitoso
+            return res.status(200).json({ data: citas, message: "Cita editada" });
+        }
+
+    } catch (error) {
+        console.error('Error al agregar los métodos de pago:', error);
+        res.status(500).json({ message: 'Error al agregar los métodos de pago' });
+    }
+};
 export const deleteAppointment = async (req, res) => {
     const token = req.cookies?.sessionToken;
 
@@ -83,7 +116,7 @@ export const deleteAppointment = async (req, res) => {
 
         // Recibimos el método de pago (no un arreglo, sino un solo string)
         const { appointmentToDelete } = req.body;
-      
+
         // Verificamos que se haya proporcionado un método de pago
         if (!appointmentToDelete) {
             return res.status(400).json({ message: 'Se requiere una cita.' });
@@ -95,6 +128,66 @@ export const deleteAppointment = async (req, res) => {
             console.log(citas)
             // Retornamos el resultado exitoso
             return res.status(200).json({ data: citas, message: "Cita eliminada" });
+        }
+
+    } catch (error) {
+        console.error('Error al agregar los métodos de pago:', error);
+        res.status(500).json({ message: 'Error al agregar los métodos de pago' });
+    }
+};
+export const deleteOwnAppointment = async (req, res) => {
+    const token = req.cookies?.sessionToken;
+
+    try {
+        // Verificamos si el token está presente
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+
+        // Decodificamos el token para obtener el _id del usuario
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Recibimos el método de pago (no un arreglo, sino un solo string)
+        const { appointmentToDelete } = req.body;
+
+        // Verificamos que se haya proporcionado un método de pago
+        if (!appointmentToDelete) {
+            return res.status(400).json({ message: 'Se requiere una cita.' });
+        }
+
+        // Llamamos al servicio para actualizar los métodos de pago
+        const citas = await appointmentService.dOwnAppointment(decoded, appointmentToDelete);
+        if (citas.deletedCount > 0) {
+            console.log(citas)
+            // Retornamos el resultado exitoso
+            return res.status(200).json({ data: citas, message: "Cita eliminada" });
+        }
+
+    } catch (error) {
+        console.error('Error al agregar los métodos de pago:', error);
+        res.status(500).json({ message: 'Error al agregar los métodos de pago' });
+    }
+};
+export const gOwnPatientsAppointments = async (req, res) => {
+    const token = req.cookies?.sessionToken;
+
+    try {
+        // Verificamos si el token está presente
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+
+        // Decodificamos el token para obtener el _id del usuario
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+
+
+        // Llamamos al servicio para actualizar los métodos de pago
+        const citas = await appointmentService.gOwnPatientsAppointments(decoded);
+        if (citas.length > 0) {
+            console.log(citas)
+            // Retornamos el resultado exitoso
+            return res.status(200).json({ data: citas, message: "Hay citas" });
         }
 
     } catch (error) {
@@ -131,14 +224,14 @@ export const gAppointments = async (req, res) => {
 };
 export const gAppointment = async (req, res) => {
     const token = req.cookies?.sessionToken;
-    
+
     try {
         // Verificamos si el token está presente
         if (!token) {
             return res.status(401).json({ error: 'No autorizado' });
         }
         console.log(token)
-        const {id} = req.params
+        const { id } = req.params
         // Decodificamos el token para obtener el _id del usuario
         if (!id) {
             return res.status(401).json({ error: 'No hay sessionid' });
@@ -159,4 +252,73 @@ export const gAppointment = async (req, res) => {
         console.error('Error al agregar los métodos de pago:', error);
         res.status(500).json({ message: 'Error al agregar los métodos de pago' });
     }
+
+
 };
+
+
+
+
+
+export const insertNotes = async (req, res) => {
+
+    const token = req.cookies?.sessionToken;
+    try {
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Recibimos el método de pago (no un arreglo, sino un solo string)
+        const { note, notes } = req.body;
+        const { sessionId } = req.params;
+        // Verificamos que se haya proporcionado un método de pago
+        if (!note) {
+            return res.status(400).json({ message: 'Se requiere una nota.' });
+        }
+        console.log(note, notes);
+        // Llamamos al servicio para actualizar los métodos de pago
+        const inserted = await appointmentService.insertNotes(decoded, note, sessionId, notes);
+        if (inserted && inserted.success) {
+            // Retornamos el resultado exitoso
+            return res.status(200).json({ data: inserted, message: "Nota insertada" });
+        }
+
+        return res.status(400).json({ message: "Error" });
+
+    } catch (error) {
+        console.error('Error al agregar los métodos de pago:', error);
+        res.status(500).json({ message: 'Error al agregar los métodos de pago' });
+    }
+};
+/* export const gNotes = async (req, res) => {
+
+    const token = req.cookies?.sessionToken;
+    try {
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Recibimos el método de pago (no un arreglo, sino un solo string)
+        const { note } = req.body;
+        const { sessionId } = req.params;
+        // Verificamos que se haya proporcionado un método de pago
+        if (!note) {
+            return res.status(400).json({ message: 'Se requiere una nota.' });
+        }
+        console.log(note);
+        // Llamamos al servicio para actualizar los métodos de pago
+        const inserted = await appointmentService.generalNotes(decoded, note, sessionId);
+        if (inserted && inserted.success) {
+            // Retornamos el resultado exitoso
+            return res.status(200).json({ data: inserted, message: "Nota insertada" });
+        }
+
+        return res.status(400).json({ message: "Error" });
+
+    } catch (error) {
+        console.error('Error al agregar los métodos de pago:', error);
+        res.status(500).json({ message: 'Error al agregar los métodos de pago' });
+    }
+}; */

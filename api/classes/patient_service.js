@@ -3,10 +3,38 @@ import { clientDB } from "../../lib/database.js";
 
 class UserService {
   constructor() {
-    this.collection = clientDB.db("contygo").collection('user'); // Nombre de la colección de usuarios
+    this.collection = clientDB.db("contygo").collection('patient'); // Nombre de la colección de usuarios
     /*  this.collection = clientDB.db("keplan").collection('user'); // Nombre de la colección de usuarios */
   }
 
+
+  async setNewPasswordPatient(decoded, hashedPassword) {
+    try {
+        // Obtener el ID del usuario decodificado
+        const userId = decoded.id;
+
+        // Actualizar la contraseña y el estado forcePasswordChange
+        const result = await this.collection.updateOne(
+            { _id: new ObjectId(userId) }, // Buscar usuario por ID
+            {
+                $set: { 
+                    password: hashedPassword, 
+                    forcePasswordChange: false 
+                }
+            }
+        );
+
+        // Verificar si realmente se actualizó el usuario
+        if (result.modifiedCount === 0) {
+            return { message: "No se pudo actualizar la contraseña. El usuario no existe o no se realizaron cambios." };
+        }
+
+        return { message: "Contraseña actualizada exitosamente."};
+    } catch (error) {
+        console.error("Error al actualizar la contraseña:", error);
+        throw new Error("Error al actualizar la contraseña");
+    }
+}
 
   async updatePaymentMethods(decoded, methods) {
     try {
@@ -88,10 +116,10 @@ class UserService {
       { email: email }
     )
   }
-  async getUser(form) {
+  async getUser(decoded, id) {
 
     return this.collection.findOne(
-      { _id: new ObjectId(form) }
+      { _id: new ObjectId(id), userId: new ObjectId(decoded.id) }
     )
   }
   async postClient(id, client) {
@@ -172,24 +200,6 @@ class UserService {
     }
   }
 
-
-
-
-  async updateFreePlan() {
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-    const result = await this.collection.updateMany(
-      { freePlan: true, createdAt: { $lte: sevenDaysAgo } },
-      { freePlan: false }
-    );
-
-    return result.modifiedCount; // Retorna la cantidad de usuarios actualizados
-  }
 }
-
-
-
-
 
 export default UserService

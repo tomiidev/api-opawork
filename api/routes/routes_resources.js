@@ -1,5 +1,5 @@
 import express from 'express';
-import { addResource, deletePatientResource, gPatientResources, gResources, shareResource } from '../controllers/resource_controller.js';
+import { addResource, deletePatientResource, gPatientOwnResources, gPatientResources, gResources, shareResource } from '../controllers/resource_controller.js';
 import multer from 'multer';
 import path from 'path';
 
@@ -29,6 +29,7 @@ router.post('/upload-resource', upload.any(), addResource);
 router.post('/get-resources', gResources);
 router.post('/share-resource', shareResource);
 router.post('/get-patient-resources', gPatientResources);
+router.post('/g-patient-own-resources', gPatientOwnResources);
 router.post('/delete-patient-resource', deletePatientResource);
 
 

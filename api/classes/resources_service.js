@@ -81,16 +81,41 @@ class ResourceService {
           return { message: "Hubo un error al obtener los recursos." };
         }
       }
+    async getPatientsOwnResources(decoded) {
+        try {
+          // Verificar si se proporciona un paciente
+          if (!decoded) {
+            return { message: "Paciente no proporcionado o inválido" };
+          }
       
-    async shareResources(decoded, patient, resource) {
+          // Buscar los recursos que están compartidos con este paciente
+          const resources = await this.collection.find({
+            userId: new ObjectId(decoded.psycoId), // Asegúrate de que los recursos son del usuario actual
+            sharedPatients: new ObjectId(decoded.id) // Filtrar los recursos donde el paciente esté en la lista de pacientes compartidos
+          }).toArray();
+      
+          // Verificar si se encontraron recursos
+          if (resources.length === 0) {
+            return { message: "No se encontraron recursos compartidos con este paciente." };
+          }
+      
+          // Retornar los recursos encontrados
+          return resources;
+        } catch (error) {
+          console.error("Error al obtener los recursos del paciente:", error);
+          return { message: "Hubo un error al obtener los recursos." };
+        }
+      }
+      
+    async shareResources(decoded, send, resource) {
         try {
           // Verificar si se ha proporcionado el recurso y el paciente
-          if (!resource || !patient) {
+          if (!resource || !send) {
             return { message: "Recurso o paciente no encontrado" }
           }
       
           // Asegurarse de que ambos IDs estén presentes (y sean válidos)
-          if (!resource._id || !patient._id) {
+          if (!resource._id || !send._id) {
             return { message: "Faltan los identificadores del recurso o paciente" }
           }
       
@@ -99,7 +124,7 @@ class ResourceService {
             { _id: new ObjectId(resource._id), userId: new ObjectId(decoded.id) }, // Buscar el recurso por su _id
             {
               $addToSet: { // Usamos $addToSet para evitar duplicados
-                sharedPatients: new ObjectId(patient._id) // Agregamos el _id del paciente a la lista sharedPatients
+                sharedPatients: new ObjectId(send._id) // Agregamos el _id del paciente a la lista sharedPatients
               }
             }
           );
