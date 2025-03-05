@@ -33,6 +33,7 @@ export const generateLink = async (req, res) => {
 
                 }
             ],
+            additional_info: new ObjectId(decoded.id), //
             auto_return: "approved",
             back_urls: {
                 success: `${URL}`,
@@ -49,7 +50,7 @@ export const generateLink = async (req, res) => {
             payer: {
 
                 name: formData.patientName,
-                /*  email: order.email, */
+                  email: formData.email, 
                 /*   phone: {
                       number: order.phone
                   }, */
@@ -158,6 +159,7 @@ export const getPayments = async (req, res) => {
             return res.status(400).json({ data: [], message: "No hay pagos registrados" });
         }
         if (result.length > 0) {
+            console.log(result);
             return res.status(200).json({ data: result, message: "Pagos obtenidos" });
         }
 

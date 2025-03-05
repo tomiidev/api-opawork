@@ -127,7 +127,7 @@ export const logout = async (req, res) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',  // Asegurarse de usar 'secure' solo en producción
             sameSite: "None",
-            domain: ".opawork.app", // Habilita el uso en todos los subdominios
+            domain: ".contygoo.com", // Habilita el uso en todos los subdominios
             path: "/", // Disponible en todas las rutas
             maxAge: 0  // La cookie se eliminará inmediatamente
         });
@@ -438,7 +438,7 @@ export const login = async (req, res) => {
             httpOnly: true,
             secure: true, //cambiar a tru en prod,
             sameSite: "None",
-            domain: ".opawork.app", // Habilita el uso en todos los subdominios
+            domain: ".contygoo.com",
             path: "/", // Disponible en todas las rutas
             maxAge: 30 * 24 * 60 * 60 * 1000
         });

@@ -15,7 +15,8 @@ class PaymentService {
     }
     async getPayments(id) {
         // Buscar usuario por email
-        const result = await this.collection.find({ user_id: new ObjectId(id) }).toArray()
+        const result = await this.collection.find({ additional_info: new ObjectId(id) }).toArray()
+        console.log(result)
         if (result.length < 0){
             return { message: "No se encontraron pagos." };
         }
