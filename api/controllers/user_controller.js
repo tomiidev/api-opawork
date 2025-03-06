@@ -224,7 +224,7 @@ export const addPatient = async (req, res) => {
         const { formData, bookingToAccept } = req.body;
 
         // Validación de los datos
-        if (!formData && !bookingToAccept) {
+        if (!formData || !bookingToAccept) {
             return res.status(400).json({ message: 'Se requiere un paciente.' });
         }
 
