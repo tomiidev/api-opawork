@@ -14,12 +14,12 @@ class WaitService {
         console.log(booking)
         try {
             // Usar el _id del usuario decodificado para buscar al usuario en la base de datos
-    
+
 
             // Buscar el documento del usuario en la colección
             const users = await this.collection.deleteOne({ therapistId: new ObjectId(booking.therapistId), _id: new ObjectId(booking._id) })
 
-            if (users.deletedCount <0) {
+            if (users.deletedCount < 0) {
                 return { message: "reserva no eliminada." };
             }
             console.log(users)
@@ -72,7 +72,8 @@ class WaitService {
                 message: info.message,
                 name: info.name,
                 gender: info.gender,
-                age: info.age
+                age: info.age,
+                createdAt: new Date()
             };
 
             // Realizamos la actualización en la base de datos

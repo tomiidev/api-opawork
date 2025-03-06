@@ -23,7 +23,7 @@ class PatientService {
                 sessions: [],
                 password: hashedPassword,
                 forcePasswordChange: true,
-
+                createdAt: new Date(),
             }
 
             // Se agrega al objeto p el _id del usuario
@@ -154,7 +154,7 @@ class PatientService {
             if (patientDeleted.deletedCount === 0) {
                 throw new Error("No se encontró el paciente para eliminar.");
             }
-            const appointmentsDeleted = await db.collection("appointment").deleteMany({userId: userId, patientId: patientId})
+            const appointmentsDeleted = await db.collection("appointment").deleteMany({ userId: userId, patientId: patientId })
             console.log(`Citas eliminadas: ${appointmentsDeleted.deletedCount}`);
 
             const farmsDeleted = await db.collection("farm").deleteMany({ userId: userId, patientId: patientId });
