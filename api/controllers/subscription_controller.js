@@ -6,7 +6,7 @@ import { MercadoPagoConfig, Preference } from "mercadopago";
 import { sendBillToBuyer } from "../nodemailer/config.js";
 const pService = new PaymentService();
 const clientMP = new MercadoPagoConfig({ accessToken: 'APP_USR-4871368307536482-030422-e18f66d0577928a3700b2f2f66b1e064-1246340668' });
-
+import PDFDocument from "pdfkit"
 
 export const generateLink = async (req, res) => {
     const token = req.cookies?.sessionToken;
