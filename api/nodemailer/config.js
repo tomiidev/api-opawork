@@ -251,7 +251,7 @@ export async function sendBillToBuyer(pdfBuffer, data) {
 
         const mailOptions = {
             from: process.env.MAIL_USERNAME,
-            to: data.payer.email,
+            to: "tomasruglio18@gmail.com",
             subject: "Factura de compra",
             text: "Adjuntamos su factura en formato PDF.",
             attachments: [
