@@ -245,3 +245,28 @@ export async function stateOrderNotify(orden) {
         throw new Error("Error al enviar el correo");
     }
 }
+export async function sendBillToBuyer(pdfBuffer, data) {
+    try {
+        const transporter = await createTransporter();
+
+        const mailOptions = {
+            from: process.env.MAIL_USERNAME,
+            to: data.buyer.email,
+            subject: "Factura de compra",
+            text: "Adjuntamos su factura en formato PDF.",
+            attachments: [
+                {
+                    filename: "factura.pdf",
+                    content: pdfBuffer,
+                    contentType: "application/pdf",
+                },
+            ],
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log("Correo enviado:", info.messageId);
+    } catch (error) {
+        console.error("Error al enviar el correo:", error);
+        throw new Error("Error al enviar el correo");
+    }
+}

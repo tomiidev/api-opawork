@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 import axios from "axios";
 import PaymentService from "../classes/subscription_service.js";
 import { MercadoPagoConfig, Preference } from "mercadopago";
+import { sendBillToBuyer } from "../nodemailer/config.js";
 const pService = new PaymentService();
 const clientMP = new MercadoPagoConfig({ accessToken: 'APP_USR-4871368307536482-030422-e18f66d0577928a3700b2f2f66b1e064-1246340668' });
 
@@ -19,7 +20,7 @@ export const generateLink = async (req, res) => {
 
         const payment = new Preference(clientMP);
 
-        const URL = "https://www.opawork.app";
+        const URL = "https://www.contygoo.com";
         const URL_back = "http://localhost:5173";
         /*   const URL = "https://ecommerce-gabriela.vercel.app"; */
         console.log("form" + JSON.stringify(formData))
@@ -50,7 +51,7 @@ export const generateLink = async (req, res) => {
             payer: {
 
                 name: formData.patientName,
-                  email: formData.email, 
+                email: formData.email,
                 /*   phone: {
                       number: order.phone
                   }, */
@@ -118,9 +119,10 @@ export const registerPayment = async (req, res) => {
         }
         console.log(JSON.stringify(order))
         const createdOrder = await pService.createPayment(order);
-        const res = await sumSells(order)
+       /*  const res = await sumSells(order) */
         //    await send(order)
-        if (!createdOrder || !res) {
+        await generateBillPdf(order)
+        if (!createdOrder /* || !res */) {
             console.error('Error al crear la orden en la base de datos');
             return res.status(500).json({
                 message: 'No se pudo crear la orden. Inténtalo de nuevo más tarde.',
@@ -136,7 +138,62 @@ export const registerPayment = async (req, res) => {
     }
 }
 
+export const generateBillPdf = async (data) => {
+    try {
+        console.log("data de pdf")
+        const doc = new PDFDocument();
+        let buffers = [];
 
+        // Capturar el PDF en memoria
+        doc.on("data", buffers.push.bind(buffers));
+        doc.on("end", async () => {
+            const pdfBuffer = Buffer.concat(buffers);
+            await sendBillToBuyer(pdfBuffer, data); // Ahora pasamos un buffer
+        });
+
+        // Generar contenido del PDF
+        doc.fontSize(20).text("Factura", { align: "center" });
+        doc.moveDown();
+
+        // Datos de la empresa
+        doc.fontSize(12).text(data.statement_descriptor);
+        doc.text("Dirección: Calle Falsa 123");
+        doc.text("Teléfono: +123456789");
+        doc.text("Correo: contacto@empresa.com");
+        doc.moveDown();
+
+        // Datos del cliente
+        doc.text("Nombre: " + data.buyer.name);
+        doc.text("Dirección: " + data.direccion_receptor.calle + " " + data.direccion_receptor.numero);
+        doc.moveDown();
+
+        // Encabezado de la tabla
+        doc.text("Cantidad  | Precio  | Total");
+        doc.text("---------------------------");
+
+        // Tabla de productos/servicios
+        let totalFactura = 0;
+        data.items.forEach(item => {
+            const total = item.quantity * item.unit_price;
+            totalFactura += total; // Acumulamos el total de la factura
+
+            doc.text(
+                `${item.quantity.toString().padEnd(9)} | ` +
+                `$${item.unit_price.toFixed(2).padEnd(7)} | ` +
+                `$${total.toFixed(2)}`
+            );
+        });
+        doc.moveDown();
+
+        // Total de la factura
+        doc.fontSize(14).text(`Total a pagar: $${totalFactura.toFixed(2)}`, { align: "right" });
+
+        // Finalizar documento
+        doc.end();
+    } catch (err) {
+        console.log(err);
+    }
+};
 export const getPayments = async (req, res) => {
     const token = req.cookies?.sessionToken;
 
