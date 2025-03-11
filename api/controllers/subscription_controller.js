@@ -163,7 +163,7 @@ export const generateBillPdf = async (data) => {
         doc.moveDown();
 
         // Datos del cliente
-        doc.text("Nombre: " + data.buyer.name);
+        doc.text("Nombre: " + data.buyer.name); 
         doc.moveDown();
 
         // Encabezado de la tabla
