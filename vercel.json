@@ -23,7 +23,7 @@
                 "OPTIONS"
             ],
             "headers": {
-                "Access-Control-Allow-Origin": "https://auth.opawork.app",
+                "Access-Control-Allow-Origin": "*",
                 "Access-Control-Allow-Credentials": "true"
             }
         }
