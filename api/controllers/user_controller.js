@@ -438,7 +438,7 @@ export const login = async (req, res) => {
             httpOnly: true,
             secure: true, //cambiar a tru en prod,
             sameSite: "None",
-            domain: ".contygoo.com",
+           /*  domain: ".contygoo.com", */
             path: "/", // Disponible en todas las rutas
             maxAge: 30 * 24 * 60 * 60 * 1000
         });
