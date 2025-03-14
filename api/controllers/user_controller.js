@@ -127,7 +127,7 @@ export const logout = async (req, res) => {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',  // Asegurarse de usar 'secure' solo en producción
             sameSite: "None",
-            domain: ".contygoo.com", // Habilita el uso en todos los subdominios
+            domain: ".opawork.app", // Habilita el uso en todos los subdominios
             path: "/", // Disponible en todas las rutas
             maxAge: 0  // La cookie se eliminará inmediatamente
         });
@@ -226,7 +226,7 @@ export const addPatient = async (req, res) => {
         if (!formData && !bookingToAccept) {
             return res.status(400).json({ message: 'Se requiere al menos un objeto válido.' });
         }
- 
+
 
         // Seleccionamos qué dato usar
         const patientData = bookingToAccept || formData;
@@ -438,7 +438,7 @@ export const login = async (req, res) => {
             httpOnly: true,
             secure: true, //cambiar a tru en prod,
             sameSite: "None",
-           /*  domain: ".contygoo.com", */
+            domain: ".opawork.app",
             path: "/", // Disponible en todas las rutas
             maxAge: 30 * 24 * 60 * 60 * 1000
         });
