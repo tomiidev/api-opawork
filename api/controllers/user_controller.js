@@ -441,10 +441,10 @@ export const login = async (req, res) => {
         // Configurar la cookie del token de sesión
 
         res.cookie('sessionToken', sessionToken, {
-            /* httpOnly: true, */
+            httpOnly: true,
             secure: true, //cambiar a tru en prod,
             sameSite: "Lax",
-            /* domain: ".opawork.app", */
+            domain: ".opawork.app",
             path: "/", // Disponible en todas las rutas
             maxAge: 30 * 24 * 60 * 60 * 1000
         });
@@ -515,7 +515,7 @@ export const gUserDataApply = async (req, res) => {
         if (!id) {
             return res.status(401).json({ error: 'No autorizado' });
         }
-        
+
         // Llamamos al servicio para actualizar los métodos de pago
         const r = await userService.getUser(id);
         if (r._id) {
