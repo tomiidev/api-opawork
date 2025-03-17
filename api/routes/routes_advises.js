@@ -1,7 +1,8 @@
 import express from 'express';
-import { addResource, deletePatientResource, gPatientOwnResources, gPatientResources, gResources, shareResource } from '../controllers/resource_controller.js';
+import { addAdvise, applyToOffer, deletePatientResource, gAdvises, gAllAdvises, getAdviseById } from '../controllers/advises_controller.js';
 import multer from 'multer';
 import path from 'path';
+import { uploadInformation } from '../controllers/user_controller.js';
 
 const router = express.Router();
 const isVercel = process.env.VERCEL === '1';
@@ -25,11 +26,11 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-router.post('/upload-resource', upload.any(), addResource);
-router.post('/get-resources', gResources);
-router.post('/share-resource', shareResource);
-router.post('/get-patient-resources', gPatientResources);
-router.post('/g-patient-own-resources', gPatientOwnResources);
+router.post('/advise-information',addAdvise);
+router.get('/get-advises', gAdvises);
+router.get('/get-all-advises', gAllAdvises);
+router.post('/apply-offer', applyToOffer);
+router.get('/get-advise-by-id/:id', getAdviseById);
 router.post('/delete-patient-resource', deletePatientResource);
 
 

@@ -3,7 +3,7 @@ import { config } from "dotenv";
 import cors from "cors";
 // Tus rutas existentes
 import appRoutes from "./routes/routes_appointments.js"
-import resRoutes from "./routes/routes_resources.js"
+import resRoutes from "./routes/routes_advises.js"
 import paymentsRoutes from "./routes/routes_subscriptions.js"
 
 
@@ -19,7 +19,7 @@ config();
 const app = express();
 app.use(cors({
     origin: ["http://localhost:5173",
-        "http://localhost:5174", "http://localhost:5175", "https://auth.opawork.app", "https://negocios.opawork.app"], methods: "GET, POST, PUT, DELETE, OPTIONS", credentials: true
+        "http://localhost:5174", "http://localhost:5175","http://localhost:5176", "https://auth.opawork.app", "https://negocios.opawork.app"], methods: "GET, POST, PUT, DELETE, OPTIONS", credentials: true
 }));
 /* app.options('*', cors()); */
 app.use(express.json());

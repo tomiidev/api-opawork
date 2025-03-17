@@ -4,7 +4,7 @@ import bcrypt from "bcrypt"
 import { generatePassword } from "../lib/generate.js";
 class PatientService {
     constructor() {
-        this.collection = clientDB.db("contygo").collection('patient'); // Nombre de la colección de usuarios
+        this.collection = clientDB.db("opawork").collection('aviso'); // Nombre de la colección de usuarios
     }
 
     async addPatient(decoded, p, hashedPassword) {
@@ -78,25 +78,36 @@ class PatientService {
     }
 
 
-    async gPatients(decoded) {
+    async gAppliesOfOffer(decoded, id) {
         try {
-            // Usar el _id del usuario decodificado para encontrar al usuario en la base de datos
-            const userId = decoded.id;
-            console.log(userId);
-            // Actualizamos la lista de métodos de pago del usuario
-            const patients = await this.collection.find(
-                { userId: new ObjectId(userId) }).toArray()
+            const userId = new ObjectId(decoded.id);
+            const offerId = new ObjectId(id);
+            console.log(offerId)
+            const result = await this.collection.aggregate([
+                {
+                    $match: { bussinesId: userId, _id: offerId } // Filtra la oferta específica del negocio
+                },
+                {
+                    $lookup: {
+                        from: "user", // Colección donde están los usuarios
+                        localField: "applys", // Array con los IDs de los usuarios que aplicaron
+                        foreignField: "_id", // Campo _id en la colección "user"
+                        as: "applicants" // Nombre del nuevo array con los datos de los usuarios
+                    }
+                }
+            ]).toArray();
 
-            if (patients.length < 0) {
-                return { message: "No se obtuvieron." };
+            if (!result.length) {
+                return { message: "No se obtuvieron postulantes." };
             }
-            console.log("pacientes" + patients)
-            return patients
+
+            return result[0].applicants; // Retorna solo los datos de los postulantes
         } catch (error) {
-            console.error('Error al actualizar los métodos de pago:', error);
-            throw new Error('Error al actualizar los métodos de pago');
+            console.error('Error al obtener los postulantes:', error);
+            throw new Error('Error al obtener los postulantes');
         }
     }
+
     async gPatient(decoded, id) {
         try {
             // Usar el _id del usuario decodificado para encontrar al usuario en la base de datos

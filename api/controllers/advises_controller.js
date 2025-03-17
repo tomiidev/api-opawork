@@ -1,11 +1,11 @@
 import jwt from "jsonwebtoken"
-import ResourcetService from "../classes/resources_service.js";
+import ResourcetService from "../classes/advises_service.js";
 import { uploadFileToS3 } from "../s3/s3.js";
 import { sendEmail } from "../nodemailer/config.js";
 const rService = new ResourcetService()
 // Registro de usuario
 
-export const addResource = async (req, res) => {
+export const addAdvise = async (req, res) => {
     const token = req.cookies?.sessionToken;
 
     try {
@@ -13,9 +13,9 @@ export const addResource = async (req, res) => {
         if (!token) {
             return res.status(401).json({ error: 'No autorizado' });
         }
-        const { files: formData } = req;
+        const { body: formData } = req;
         if (!formData) {
-            return res.status(400).json({ message: "No se ha subido ningún archivo" });
+            return res.status(400).json({ message: "No se ha subido ningún aviso" });
         }
         // Decodificamos el token para obtener el _id del usuario
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -28,9 +28,9 @@ export const addResource = async (req, res) => {
         }
 
         // Llamamos al servicio para actualizar los métodos de pago
-        const r = await rService.addResource(decoded, formData);
-        if (r.insertedCount > 0) {
-            await uploadFileToS3(decoded, formData)
+        const r = await rService.uploadInformation(decoded, formData);
+        if (r.insertedId) {
+
             // Retornamos el resultado exitoso
             return res.status(200).json({ data: r, message: "Archivo obtenido" });
         }
@@ -40,7 +40,7 @@ export const addResource = async (req, res) => {
         res.status(500).json({ message: 'Error al agregar los métodos de pago' });
     }
 };
-export const gResources = async (req, res) => {
+export const gAdvises = async (req, res) => {
     const token = req.cookies?.sessionToken;
 
     try {
@@ -57,10 +57,10 @@ export const gResources = async (req, res) => {
 
 
         // Llamamos al servicio para actualizar los métodos de pago
-        const r = await rService.getResources(decoded);
+        const r = await rService.getAdvises(decoded);
         if (r.length > 0) {
             console.log(r)
-            return res.status(200).json({ data: r, message: "Archivos obtenidos" });
+            return res.status(200).json({ data: r, message: "Avisos obtenidos" });
         }
 
     } catch (error) {
@@ -68,35 +68,7 @@ export const gResources = async (req, res) => {
         res.status(500).json({ message: 'Error al agregar los métodos de pago' });
     }
 };
-export const gPatientResources = async (req, res) => {
-    const token = req.cookies?.sessionToken;
-
-    try {
-        // Verificamos si el token está presente
-        if (!token) {
-            return res.status(401).json({ error: 'No autorizado' });
-        }
-        const { patient } = req.body;
-
-        // Decodificamos el token para obtener el _id del usuario
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-
-
-
-        // Llamamos al servicio para actualizar los métodos de pago
-        const r = await rService.getPatientsResources(decoded, patient);
-        if (r.length > 0) {
-            console.log(r)
-            return res.status(200).json({ data: r, message: "Archivos obtenidos" });
-        }
-
-    } catch (error) {
-        console.error('Error al agregar los métodos de pago:', error);
-        res.status(500).json({ message: 'Error al agregar los métodos de pago' });
-    }
-};
-export const gPatientOwnResources = async (req, res) => {
+export const gAllAdvises = async (req, res) => {
     const token = req.cookies?.sessionToken;
 
     try {
@@ -112,10 +84,10 @@ export const gPatientOwnResources = async (req, res) => {
 
 
         // Llamamos al servicio para actualizar los métodos de pago
-        const r = await rService.getPatientsOwnResources(decoded);
+        const r = await rService.getAllUserAdvises(decoded);
         if (r.length > 0) {
             console.log(r)
-            return res.status(200).json({ data: r, message: "Archivos obtenidos" });
+            return res.status(200).json({ data: r, message: "Avisos obtenidos" });
         }
 
     } catch (error) {
@@ -123,7 +95,33 @@ export const gPatientOwnResources = async (req, res) => {
         res.status(500).json({ message: 'Error al agregar los métodos de pago' });
     }
 };
-export const shareResource = async (req, res) => {
+export const getAdviseById = async (req, res) => {
+    const token = req.cookies?.sessionToken;
+
+    try {
+        const { id } = req.params;
+        // Verificamos si el token está presente
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+
+
+
+
+        // Llamamos al servicio para actualizar los métodos de pago
+        const r = await rService.getAdviseById(id);
+        if (r._id) {
+            console.log(r)
+            return res.status(200).json({ data: r, message: "Aviso obtenidos" });
+        }
+
+    } catch (error) {
+        console.error('Error al agregar los métodos de pago:', error);
+        res.status(500).json({ message: 'Error al agregar los métodos de pago' });
+    }
+};
+
+export const applyToOffer = async (req, res) => {
     const token = req.cookies?.sessionToken;
 
     try {
@@ -131,10 +129,10 @@ export const shareResource = async (req, res) => {
         if (!token) {
             return res.status(401).json({ error: 'No autorizado' });
         }
-        const { send, resource } = req.body;
-        console.log(send, resource);
-        if (!send || !resource) {
-            return res.status(400).json({ message: "Faltan datos: paciente o recurso no proporcionados" });
+        const { id } = req.body;
+
+        if (!id) {
+            return res.status(400).json({ message: "Faltan datos" });
         }
         // Decodificamos el token para obtener el _id del usuario
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -143,14 +141,13 @@ export const shareResource = async (req, res) => {
 
 
         // Llamamos al servicio para actualizar los métodos de pago
-        const result = await rService.shareResources(decoded, send, resource);
-        const r = await rService.getResourceById(decoded, resource);
-        console.log(r)
-        if (result.modifiedCount > 0 && r._id) {
-            await sendEmail(decoded, send, r)
-            return res.status(200).json({ data: result, message: "Archivo compartido" });
-        }
+        const result = await rService.applyOffer(decoded, id);
 
+        if (result.modifiedCount > 0) {
+            /*   await sendEmail(decoded, send, r) */
+            return res.status(200).json({ data: result, message: "Aplicacion relizada" });
+        }
+        res.status(400).json({ message: "errro" })
     } catch (error) {
         console.error('Error al agregar los métodos de pago:', error);
         res.status(500).json({ message: 'Error al agregar los métodos de pago' });

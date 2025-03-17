@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { checkAuth, getAllProductsById, login, logout,AddPaymentMethod, register, getProfile, getPaymentMethods, diagram, getPatients, addPatient, ePatient, dPatient, uploadPhoto, uploadInformation, getUser, checkAuthPatientCredentials } from "../controllers/user_controller.js"
+import { checkAuth, getAllProductsById, login, logout,AddPaymentMethod, register, getProfile, getPaymentMethods, diagram, addPatient, ePatient, dPatient, uploadPhoto, uploadInformation, getUser, checkAuthPatientCredentials, gAppliesOfOffer, gUserDataApply } from "../controllers/user_controller.js"
 import multer from "multer";
 import path from 'path';
 const router = Router();
@@ -29,6 +29,7 @@ router.post('/generar-diagrama', diagram);
 router.post('/upload-photo-by-user',upload.any(), uploadPhoto);
 router.post('/user-information', uploadInformation);
 router.post('/get-id', getUser)
+router.get('/g-user-applied-information/:id', /* authenticate */gUserDataApply);
 router.get('/own_store/:id', getAllProductsById)
 
 router.get('/get-user-data', getProfile)
@@ -38,7 +39,7 @@ router.post('/sign_in_with_email', /* authenticate */login);
 
 router.get('/check-auth', /* authenticate */checkAuth);
 router.get('/checkpatients-auth', /* authenticate */checkAuthPatientCredentials);
-router.get('/get-patients', /* authenticate */getPatients);
+router.get('/get-applies-of-offer/:id', /* authenticate */gAppliesOfOffer);
 router.post('/add-patient', /* authenticate */addPatient);
 router.post('/edit-patient', /* authenticate */ePatient);
 router.delete('/delete-patient', /* authenticate */dPatient);

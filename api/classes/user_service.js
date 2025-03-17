@@ -3,7 +3,7 @@ import { clientDB } from "../../lib/database.js";
 
 class UserService {
   constructor() {
-    this.collection = clientDB.db("contygo").collection('user'); // Nombre de la colección de usuarios
+    this.collection = clientDB.db("opawork").collection('user'); // Nombre de la colección de usuarios
     /*  this.collection = clientDB.db("keplan").collection('user'); // Nombre de la colección de usuarios */
   }
 
@@ -89,7 +89,7 @@ class UserService {
     )
   }
   async getUser(form) {
-
+console.log(form)
     return this.collection.findOne(
       { _id: new ObjectId(form) }
     )
@@ -154,9 +154,19 @@ class UserService {
     try {
       console.log(info)
       // Construimos dinámicamente el objeto de actualización
-      let updateFields = {
-        phone: info.phone, description: info.description, email: info.email, name: info.name, especiality: info.especiality, modality: info.modality, therapyTypes: info.therapyTypes
-        , department: info.department, neighborhood: info.neighborhood, socialNetworks: info.socialNetworks
+      const updateFields = {
+        languages: info.languages,
+        priceRange: info.priceRange,
+        especialities: info.especialities,
+        subs: info.subs,
+        modality: info.modality,
+        phone: info.phone,
+        description: info.description,
+        email: info.email,
+        name: info.name,
+        especiality: info.especiality,
+        modality: info.modality,
+        socialNetworks: info.socialNetworks
       }
 
       // Realizamos la actualización en la base de datos

@@ -126,8 +126,8 @@ export const logout = async (req, res) => {
         res.clearCookie('sessionToken', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',  // Asegurarse de usar 'secure' solo en producción
-            sameSite: "None",
-            domain: ".opawork.app", // Habilita el uso en todos los subdominios
+            sameSite: "Lax",
+            /*  domain: ".opawork.app", */ // Habilita el uso en todos los subdominios
             path: "/", // Disponible en todas las rutas
             maxAge: 0  // La cookie se eliminará inmediatamente
         });
@@ -309,12 +309,16 @@ export const ePatient = async (req, res) => {
         res.status(500).json({ message: 'Error al agregar los métodos de pago' });
     }
 };
-export const getPatients = async (req, res) => {
+export const gAppliesOfOffer = async (req, res) => {
     const token = req.cookies?.sessionToken;
 
     try {
+        const { id } = req.params
         // Verificamos si el token está presente
         if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+        if (!id) {
             return res.status(401).json({ error: 'No autorizado' });
         }
 
@@ -324,10 +328,12 @@ export const getPatients = async (req, res) => {
 
 
         // Llamamos al servicio para actualizar los métodos de pago
-        const patients = await patService.gPatients(decoded);
-        console.log(patients);
-        // Retornamos el resultado exitoso
-        return res.status(200).json({ data: patients, message: "Paciente agregado" });
+        const patients = await patService.gAppliesOfOffer(decoded, id);
+        if (patients) {
+            console.log(patients)
+            // Retornamos el resultado exitoso
+            return res.status(200).json({ data: patients, message: "Paciente agregado" });
+        }
 
     } catch (error) {
         console.error('Error al agregar los métodos de pago:', error);
@@ -435,10 +441,10 @@ export const login = async (req, res) => {
         // Configurar la cookie del token de sesión
 
         res.cookie('sessionToken', sessionToken, {
-            httpOnly: true,
+            /* httpOnly: true, */
             secure: true, //cambiar a tru en prod,
-            sameSite: "None",
-            domain: ".opawork.app",
+            sameSite: "Lax",
+            /* domain: ".opawork.app", */
             path: "/", // Disponible en todas las rutas
             maxAge: 30 * 24 * 60 * 60 * 1000
         });
@@ -497,6 +503,31 @@ export const getUser = async (req, res) => {
     }
 };
 
+export const gUserDataApply = async (req, res) => {
+    const token = req.cookies?.sessionToken;
+
+    try {
+        // Verificamos si el token está presente
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+        const { id } = req.params
+        if (!id) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+        
+        // Llamamos al servicio para actualizar los métodos de pago
+        const r = await userService.getUser(id);
+        if (r._id) {
+            console.log(r)
+            return res.status(200).json({ data: r, message: "Perfil obtenido" });
+        }
+
+    } catch (error) {
+        console.error('Error al agregar los métodos de pago:', error);
+        res.status(500).json({ message: 'Error al agregar los métodos de pago' });
+    }
+};
 
 export const uploadPhoto = async (req, res) => {
     const token = req.cookies?.sessionToken;

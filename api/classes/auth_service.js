@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 
 class AuthService {
     constructor() {
-        this.collection = clientDB.db("contygo").collection('user'); // Nombre de la colección de usuarios
+        this.collection = clientDB.db("opawork").collection('user'); // Nombre de la colección de usuarios
         /*  this.collection = clientDB.db("keplan").collection('user'); // Nombre de la colección de usuarios */
     }
 
