@@ -443,7 +443,7 @@ export const login = async (req, res) => {
         res.cookie('sessionToken', sessionToken, {
             httpOnly: true,
             secure: true, //cambiar a tru en prod,
-            sameSite: "Lax",
+            sameSite: "Strict",
             domain: ".opawork.app",
             path: "/", // Disponible en todas las rutas
             maxAge: 30 * 24 * 60 * 60 * 1000
