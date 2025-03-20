@@ -7,14 +7,13 @@ class ResourceService {
   }
 
 
-  async  getTitleAdvise(userId) {
+  async getTitleAdviseBusiness(userId) {
     // Buscamos el aviso en base al userId del aplicante
     const aviso = await this.collection.aggregate([
       {
         $match: {
-          "applys": { // Filtramos por el array "applys"
-            $elemMatch: { userId: new ObjectId(userId) } // Buscamos un objeto dentro del array que tenga el userId igual al idReceiver
-          }
+          "bussinesId": new ObjectId(userId)
+
         }
       },
       {
@@ -24,80 +23,101 @@ class ResourceService {
         }
       }
     ]).toArray();
-  
+
+    return aviso.length > 0 ? aviso[0].title : null;
+  }
+  async getTitleAdvise(userId) {
+    // Buscamos el aviso en base al userId del aplicante
+    const aviso = await this.collection.aggregate([
+      {
+        $match: {
+          "applys": { // Filtramos por el array "applys"
+            $elemMatch: { userId: new ObjectId(userId) } // Buscamos un objeto dentro del array que tenga el userId igual al idReceiver
+          }
+
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          title: "$title" // Extraemos solo el título del aviso
+        }
+      }
+    ]).toArray();
+
     return aviso.length > 0 ? aviso[0].title : null;
   }
   async gAppliesOfOffer(decoded, id) {
     try {
-        const userId = new ObjectId(decoded.id);
-        const offerId = new ObjectId(id);
+      const userId = new ObjectId(decoded.id);
+      const offerId = new ObjectId(id);
 
-        const result = await this.collection.aggregate([
-            {
-                $match: { bussinesId: userId, _id: offerId } // Filtra la oferta específica del negocio
-            },
-            {
-                $unwind: "$applys" // Descompone el array de aplicaciones
-            },
-            {
-                $lookup: {
-                    from: "user", // Colección de usuarios
-                    localField: "applys.userId", // Campo dentro de applys que contiene el ID del usuario
-                    foreignField: "_id", // Campo _id en la colección "user"
-                    as: "applicantData" // Nuevo array con la información del usuario
-                }
-            },
-            {
-                $unwind: "$applicantData" // Para aplanar la estructura y obtener cada usuario individualmente
-            },
-            {
-                $group: {
-                    _id: "$_id", // Mantiene la agrupación por oferta
-                    applicants: { $push: "$applicantData" } // Agrupa todos los usuarios en un array
-                }
-            }
-        ]).toArray();
-
-        if (!result.length) {
-            return { message: "No se obtuvieron postulantes." };
-        }
-
-        return result[0].applicants; // Retorna solo los postulantes
-    } catch (error) {
-        console.error("Error al obtener los postulantes:", error);
-        throw new Error("Error al obtener los postulantes");
-    }
-}
-
-/*      async gAppliesOfOffer(decoded, id) {
-      try {
-          const userId = new ObjectId(decoded.id);
-          const offerId = new ObjectId(id);
-          console.log(offerId)
-          const result = await this.collection.aggregate([
-              {
-                  $match: { bussinesId: userId, _id: offerId } // Filtra la oferta específica del negocio
-              },
-              {
-                  $lookup: {
-                      from: "user", // Colección donde están los usuarios
-                      localField: "applys", // Array con los IDs de los usuarios que aplicaron
-                      foreignField: "_id", // Campo _id en la colección "user"
-                      as: "applicants" // Nombre del nuevo array con los datos de los usuarios
-                  }
-              }
-          ]).toArray();
-  
-          if (!result.length) {
-              return { message: "No se obtuvieron postulantes." };
+      const result = await this.collection.aggregate([
+        {
+          $match: { bussinesId: userId, _id: offerId } // Filtra la oferta específica del negocio
+        },
+        {
+          $unwind: "$applys" // Descompone el array de aplicaciones
+        },
+        {
+          $lookup: {
+            from: "user", // Colección de usuarios
+            localField: "applys.userId", // Campo dentro de applys que contiene el ID del usuario
+            foreignField: "_id", // Campo _id en la colección "user"
+            as: "applicantData" // Nuevo array con la información del usuario
           }
-  
-          return result[0].applicants; // Retorna solo los datos de los postulantes
-      } catch (error) {
-          console.error('Error al obtener los postulantes:', error);
-          throw new Error('Error al obtener los postulantes');
+        },
+        {
+          $unwind: "$applicantData" // Para aplanar la estructura y obtener cada usuario individualmente
+        },
+        {
+          $group: {
+            _id: "$_id", // Mantiene la agrupación por oferta
+            applicants: { $push: "$applicantData" } // Agrupa todos los usuarios en un array
+          }
+        }
+      ]).toArray();
+
+      if (!result.length) {
+        return { message: "No se obtuvieron postulantes." };
       }
-  }  */
+
+      return result[0].applicants; // Retorna solo los postulantes
+    } catch (error) {
+      console.error("Error al obtener los postulantes:", error);
+      throw new Error("Error al obtener los postulantes");
+    }
+  }
+
+  /*      async gAppliesOfOffer(decoded, id) {
+        try {
+            const userId = new ObjectId(decoded.id);
+            const offerId = new ObjectId(id);
+            console.log(offerId)
+            const result = await this.collection.aggregate([
+                {
+                    $match: { bussinesId: userId, _id: offerId } // Filtra la oferta específica del negocio
+                },
+                {
+                    $lookup: {
+                        from: "user", // Colección donde están los usuarios
+                        localField: "applys", // Array con los IDs de los usuarios que aplicaron
+                        foreignField: "_id", // Campo _id en la colección "user"
+                        as: "applicants" // Nombre del nuevo array con los datos de los usuarios
+                    }
+                }
+            ]).toArray();
+    
+            if (!result.length) {
+                return { message: "No se obtuvieron postulantes." };
+            }
+    
+            return result[0].applicants; // Retorna solo los datos de los postulantes
+        } catch (error) {
+            console.error('Error al obtener los postulantes:', error);
+            throw new Error('Error al obtener los postulantes');
+        }
+    }  */
   async uploadInformation(decoded, info) {
     try {
       console.log(info)

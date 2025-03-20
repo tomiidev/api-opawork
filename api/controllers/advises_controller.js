@@ -112,8 +112,9 @@ export const gTitleAdvise = async (req, res) => {
 
         // Obtener los nombres de los usuarios en los chats
         const r = await rService.getTitleAdvise(id);
+        const d = await rService.getTitleAdviseBusiness(id);
         console.log(r)
-        res.status(200).json({ data: r, message: "titulo obtenido" });
+        res.status(200).json({ data: {r:r,d:d}, message: "titulo obtenido" });
 
 
     } catch (error) {
