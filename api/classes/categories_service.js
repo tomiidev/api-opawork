@@ -78,35 +78,7 @@ class PatientService {
     }
 
 
-    async gAppliesOfOffer(decoded, id) {
-        try {
-            const userId = new ObjectId(decoded.id);
-            const offerId = new ObjectId(id);
-            console.log(offerId)
-            const result = await this.collection.aggregate([
-                {
-                    $match: { bussinesId: userId, _id: offerId } // Filtra la oferta específica del negocio
-                },
-                {
-                    $lookup: {
-                        from: "user", // Colección donde están los usuarios
-                        localField: "applys", // Array con los IDs de los usuarios que aplicaron
-                        foreignField: "_id", // Campo _id en la colección "user"
-                        as: "applicants" // Nombre del nuevo array con los datos de los usuarios
-                    }
-                }
-            ]).toArray();
 
-            if (!result.length) {
-                return { message: "No se obtuvieron postulantes." };
-            }
-
-            return result[0].applicants; // Retorna solo los datos de los postulantes
-        } catch (error) {
-            console.error('Error al obtener los postulantes:', error);
-            throw new Error('Error al obtener los postulantes');
-        }
-    }
 
     async gPatient(decoded, id) {
         try {

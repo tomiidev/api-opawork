@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 import { clientDB } from "../../lib/database.js";
-
+import { v4 as uuidv4 } from 'uuid';
 class UserService {
   constructor() {
     this.collection = clientDB.db("opawork").collection('user'); // Nombre de la colección de usuarios
@@ -8,6 +8,24 @@ class UserService {
   }
 
 
+  /*   async createChatBetweenUserAndBusiness(decoded, idPostulante) {
+      try {
+        // Usar el _id del usuario decodificado para encontrar al usuario en la base de datos
+        const userId = decoded.id;
+    
+        // Actualizamos la lista de métodos de pago del usuario
+        const result = await this.collection.insertOne();
+  
+        if (result.modifiedCount === 0) {
+          return { message: "No se actualizó ninguna categoría de métodos de pago." };
+        }
+  
+        return { message: "Métodos de pago actualizados exitosamente." };
+      } catch (error) {
+        console.error('Error al actualizar los métodos de pago:', error);
+        throw new Error('Error al actualizar los métodos de pago');
+      }
+    } */
   async updatePaymentMethods(decoded, methods) {
     try {
       // Usar el _id del usuario decodificado para encontrar al usuario en la base de datos
@@ -88,8 +106,42 @@ class UserService {
       { email: email }
     )
   }
+  async getUserByReceiverId(r) {
+
+    return this.collection.findOne(
+      { sender_mongo_id: r }
+    )
+  }
+
+
+  
+  
+  
+
+
+  async getUserByChats(chats) {
+
+    // Obtener todos los IDs únicos de user1 y user2 en los chats
+    const userIds = [...new Set(chats.flatMap(chat => [chat.user1, chat.user2]))];
+
+    // Buscar todos los usuarios que coincidan con esos sender_mongo_id
+    const users = await this.collection.find(
+      { sender_mongo_id: { $in: userIds } },
+      { projection: { sender_mongo_id: 1, name: 1 } } // Solo traer sender_mongo_id y name
+    ).toArray();
+
+    // Convertir el resultado en un mapa { sender_mongo_id: name }
+    const userMap = new Map(users.map(user => [user.sender_mongo_id, user.name]));
+
+    // Agregar los nombres a cada chat
+    return chats.map(chat => ({
+      ...chat,
+      name_one: userMap.get(chat.user1) || "Usuario desconocido",
+      name_two: userMap.get(chat.user2) || "Usuario desconocido",
+    }));
+  }
   async getUser(form) {
-console.log(form)
+    console.log(form)
     return this.collection.findOne(
       { _id: new ObjectId(form) }
     )
@@ -159,6 +211,8 @@ console.log(form)
         priceRange: info.priceRange,
         especialities: info.especialities,
         subs: info.subs,
+        paymentsMethods: info.paymentsMethods,
+        sender_mongo_id: info.sender_mongo_id,
         modality: info.modality,
         phone: info.phone,
         description: info.description,
@@ -166,6 +220,7 @@ console.log(form)
         name: info.name,
         especiality: info.especiality,
         modality: info.modality,
+        priceRange: info.priceRange,
         socialNetworks: info.socialNetworks
       }
 
@@ -196,6 +251,75 @@ console.log(form)
 
     return result.modifiedCount; // Retorna la cantidad de usuarios actualizados
   }
+
+
+  async getChats(decoded) {
+    const chats = await this.collection.aggregate([
+      // 🔹 Paso 1: Filtrar al usuario autenticado
+      {
+        $match: { _id: new ObjectId(decoded.id) }  // Filtramos por el _id del usuario autenticado
+      },
+      // 🔹 Paso 2: Buscar los chats donde el usuario está involucrado en `participants`
+      {
+        $lookup: {
+          from: "chat",
+          let: { userId: "$_id" },  // Usamos el _id del usuario como variable local
+          pipeline: [
+            {
+              $match: {
+                $expr: { $in: ["$$userId", "$participants"] }  // Verificamos si el usuario está en el array `participants`
+              }
+            },
+            {
+              $project: {
+                _id: 1,  // Solo necesitamos el _id del chat
+                participants: 1  // Y los participantes en el chat
+              }
+            }
+          ],
+          as: "userChats"  // Almacenamos los chats encontrados en el campo 'userChats'
+        }
+      },
+      // 🔹 Paso 3: Desplegar los resultados para trabajar con un solo chat
+      {
+        $unwind: "$userChats"
+      },
+      // 🔹 Paso 4: Obtener los usuarios que participan en el chat, excluyendo al usuario autenticado
+      {
+        $project: {
+          chatParticipants: {
+            $filter: {
+              input: "$userChats.participants",  // Obtenemos los participantes del chat
+              as: "participant",  // Definimos una variable para cada participante
+              cond: { $ne: ["$$participant", new ObjectId(decoded.id)] }  // Excluimos al usuario autenticado
+            }
+          }
+        }
+      },
+      // 🔹 Paso 5: Lookup para obtener la información de los participantes (usuarios)
+      {
+        $lookup: {
+          from: "user",  // Buscamos en la colección `user`
+          localField: "chatParticipants",  // Usamos los participantes filtrados
+          foreignField: "_id",  // Buscamos por el _id en la colección `user`
+          as: "chatUsers"  // Guardamos los usuarios encontrados en 'chatUsers'
+        }
+      },
+      // 🔹 Paso 6: Proyección final
+      {
+        $project: {
+          _id: 0,  // Excluimos el _id del documento de salida
+          chatUsers: 1  // Mostramos solo los usuarios involucrados en los chats
+        }
+      }
+    ]).toArray();
+
+    // 🔹 Retornar la lista de usuarios con los que el usuario autenticado tiene chats
+    return chats.length > 0 ? chats[0].chatUsers : [];
+  }
+
+
+
 }
 
 

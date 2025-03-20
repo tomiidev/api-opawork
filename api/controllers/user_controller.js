@@ -22,6 +22,58 @@ export const freePlan = async (req, res) => {
         res.status(500).json({ message: "Error actualizando suscripciones", error });
     }
 };
+export const gUserByChats = async (req, res) => {
+    const token = req.cookies.sessionToken;
+
+    try {
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+
+        const { chats } = req.body; // Recibir el array de chats
+        if (!chats || !Array.isArray(chats)) {
+            return res.status(400).json({ error: 'Datos de chats inválidos' });
+        }
+
+        // Obtener los nombres de los usuarios en los chats
+        const enrichedChats = await userService.getUserByChats(chats);
+
+
+        res.status(200).json({ data: enrichedChats, message: "Usuarios obtenidos" });
+
+    } catch (error) {
+        console.error("Error obteniendo usuarios:", error);
+        res.status(500).json({ message: "Error interno del servidor", error });
+    }
+};
+
+export const gUserByReceiverId = async (req, res) => {
+    const token = req.cookies.sessionToken;
+
+    try {
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+
+        const { id } = req.params; // Recibir el array de chats
+
+        if (!id) {
+            return res.status(400).json({ error: 'Datos de chats inválidos' });
+        }
+
+        // Obtener los nombres de los usuarios en los chats
+        const r = await userService.getUserByReceiverId(id);
+        if (r._id) {
+
+            res.status(200).json({ data: r, message: "Usuarios obtenidos" });
+        }
+
+    } catch (error) {
+        console.error("Error obteniendo usuarios:", error);
+        res.status(500).json({ message: "Error interno del servidor", error });
+    }
+};
+
 export const register = async (req, res) => {
     try {
         const token = await authService.register(req.body);
@@ -31,6 +83,7 @@ export const register = async (req, res) => {
         res.status(400).json({ message: 'Error al registrar usuario' });
     }
 };
+
 export const diagram = async (req, res) => {
     try {
         exec('python api/testpsyco.py', (error, stdout, stderr) => {
@@ -79,7 +132,8 @@ export const checkAuth = async (req, res) => {
                 phone: decoded.phone,
                 name: decoded.name,
                 description: decoded.description,
-
+                typeAccount: decoded.typeAccount,
+                sender_mongo_id: decoded.sender_mongo_id
 
 
             }
@@ -309,37 +363,7 @@ export const ePatient = async (req, res) => {
         res.status(500).json({ message: 'Error al agregar los métodos de pago' });
     }
 };
-export const gAppliesOfOffer = async (req, res) => {
-    const token = req.cookies?.sessionToken;
 
-    try {
-        const { id } = req.params
-        // Verificamos si el token está presente
-        if (!token) {
-            return res.status(401).json({ error: 'No autorizado' });
-        }
-        if (!id) {
-            return res.status(401).json({ error: 'No autorizado' });
-        }
-
-        // Decodificamos el token para obtener el _id del usuario
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-
-
-        // Llamamos al servicio para actualizar los métodos de pago
-        const patients = await patService.gAppliesOfOffer(decoded, id);
-        if (patients) {
-            console.log(patients)
-            // Retornamos el resultado exitoso
-            return res.status(200).json({ data: patients, message: "Paciente agregado" });
-        }
-
-    } catch (error) {
-        console.error('Error al agregar los métodos de pago:', error);
-        res.status(500).json({ message: 'Error al agregar los métodos de pago' });
-    }
-};
 export const AddPaymentMethod = async (req, res) => {
     const token = req.cookies?.sessionToken;
 
@@ -429,6 +453,8 @@ export const login = async (req, res) => {
                 freePlan: user.freePlan,
                 phone: user.phone,
                 description: user.description,
+                typeAccount: user.typeAccount,
+                sender_mongo_id: user.sender_mongo_id
                 /*      nombre: user.nombre, */
                 // Puedes agregar más datos aquí si es necesario
             },
@@ -443,8 +469,10 @@ export const login = async (req, res) => {
         res.cookie('sessionToken', sessionToken, {
             httpOnly: true,
             secure: true, //cambiar a tru en prod,
-            sameSite: "None",
-            domain: ".opawork.app",
+            sameSite: "Strict",
+
+             /* sameSite: "None", */
+            domain: ".opawork.app", 
             path: "/", // Disponible en todas las rutas
             maxAge: 30 * 24 * 60 * 60 * 1000
         });
@@ -615,4 +643,27 @@ export const getInformation = async (req, res) => {
 };
 
 // Actualizar perfil del usuario autenticado
+
+export const gChats = async (req, res) => {
+    const token = req.cookies?.sessionToken;
+    try {
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const chats = await userService.getChats(decoded);
+
+        if (chats.length > 0) {
+            console.log(JSON.stringify(chats))
+            return res.status(200).json({ data: chats, message: "Obtenidos" });
+        }
+
+    } catch (error) {
+        console.error("Error en getMessages:", error);
+        res.status(500).json({ error: "Error del servidor" });
+    }
+};
+
+
+
 

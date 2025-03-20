@@ -95,6 +95,90 @@ export const gAllAdvises = async (req, res) => {
         res.status(500).json({ message: 'Error al agregar los métodos de pago' });
     }
 };
+
+export const gTitleAdvise = async (req, res) => {
+    const token = req.cookies.sessionToken;
+
+    try {
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+
+        const { id } = req.params; // Recibir el array de chats
+        console.log("titlo aviso" + id)
+        if (!id) {
+            return res.status(400).json({ error: 'Datos de chats inválidos' });
+        }
+
+        // Obtener los nombres de los usuarios en los chats
+        const r = await rService.getTitleAdvise(id);
+        console.log(r)
+        res.status(200).json({ data: r, message: "titulo obtenido" });
+
+
+    } catch (error) {
+        console.error("Error obteniendo usuarios:", error);
+        res.status(500).json({ message: "Error interno del servidor", error });
+    }
+};
+export const gAppliesOfOffer = async (req, res) => {
+    const token = req.cookies?.sessionToken;
+
+    try {
+        const { id } = req.params
+        // Verificamos si el token está presente
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+        if (!id) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+
+        // Decodificamos el token para obtener el _id del usuario
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+
+
+        // Llamamos al servicio para actualizar los métodos de pago
+        const patients = await rService.gAppliesOfOffer(decoded, id);
+        if (patients.length > 0) {
+            console.log(patients)
+            // Retornamos el resultado exitoso
+            return res.status(200).json({ data: patients, message: "Aplicantes" });
+        }
+
+    } catch (error) {
+        console.error('Error al agregar los métodos de pago:', error);
+        res.status(500).json({ message: 'Error al agregar los métodos de pago' });
+    }
+};
+export const gAllFreelanceAdvises = async (req, res) => {
+    const token = req.cookies?.sessionToken;
+
+    try {
+        // Verificamos si el token está presente
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+
+        // Decodificamos el token para obtener el _id del usuario
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+
+
+
+        // Llamamos al servicio para actualizar los métodos de pago
+        const r = await rService.getFreelanceAdvises(decoded);
+        if (r.length > 0) {
+            console.log(r)
+            return res.status(200).json({ data: r, message: "Avisos obtenidos" });
+        }
+
+    } catch (error) {
+        console.error('Error al agregar los métodos de pago:', error);
+        res.status(500).json({ message: 'Error al agregar los métodos de pago' });
+    }
+};
 export const getAdviseById = async (req, res) => {
     const token = req.cookies?.sessionToken;
 

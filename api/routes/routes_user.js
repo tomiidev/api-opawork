@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { checkAuth, getAllProductsById, login, logout,AddPaymentMethod, register, getProfile, getPaymentMethods, diagram, addPatient, ePatient, dPatient, uploadPhoto, uploadInformation, getUser, checkAuthPatientCredentials, gAppliesOfOffer, gUserDataApply } from "../controllers/user_controller.js"
+import { checkAuth, getAllProductsById, login, logout,AddPaymentMethod, register,
+     getProfile, getPaymentMethods, diagram, addPatient, ePatient, dPatient, uploadPhoto,
+      uploadInformation, getUser, checkAuthPatientCredentials, gUserDataApply, gChats, 
+      gUserByChats,
+      gUserByReceiverId} from "../controllers/user_controller.js"
 import multer from "multer";
 import path from 'path';
 const router = Router();
@@ -36,10 +40,13 @@ router.get('/get-user-data', getProfile)
 // Inicio de sesión
 router.post('/sign_in_with_email', /* authenticate */login);
 
+router.get("/chats", gChats);
+router.post("/messages", gUserByChats);
 
 router.get('/check-auth', /* authenticate */checkAuth);
 router.get('/checkpatients-auth', /* authenticate */checkAuthPatientCredentials);
-router.get('/get-applies-of-offer/:id', /* authenticate */gAppliesOfOffer);
+router.get("/messages/:id", gUserByReceiverId);
+
 router.post('/add-patient', /* authenticate */addPatient);
 router.post('/edit-patient', /* authenticate */ePatient);
 router.delete('/delete-patient', /* authenticate */dPatient);

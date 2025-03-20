@@ -1,8 +1,8 @@
 import express from 'express';
-import { addAdvise, applyToOffer, deletePatientResource, gAdvises, gAllAdvises, getAdviseById } from '../controllers/advises_controller.js';
+import { addAdvise, applyToOffer, deletePatientResource, gAdvises, gAllAdvises, gAllFreelanceAdvises, gAppliesOfOffer, getAdviseById, gTitleAdvise } from '../controllers/advises_controller.js';
 import multer from 'multer';
 import path from 'path';
-import { uploadInformation } from '../controllers/user_controller.js';
+import {  uploadInformation } from '../controllers/user_controller.js';
 
 const router = express.Router();
 const isVercel = process.env.VERCEL === '1';
@@ -30,8 +30,10 @@ router.post('/advise-information',addAdvise);
 router.get('/get-advises', gAdvises);
 router.get('/get-all-advises', gAllAdvises);
 router.post('/apply-offer', applyToOffer);
+router.get('/get-all-freelance-advises', gAllFreelanceAdvises);
 router.get('/get-advise-by-id/:id', getAdviseById);
 router.post('/delete-patient-resource', deletePatientResource);
-
+router.get('/get-applies-of-offer/:id', /* authenticate */gAppliesOfOffer);
+router.get('/title-of-advise/:id', gTitleAdvise);
 
 export default router;

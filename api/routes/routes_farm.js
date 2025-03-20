@@ -1,12 +1,12 @@
 import express from 'express';
-import { dPatientFarm, gPatientFarms, insertFarm } from '../controllers/farm_controller.js';
+import {getMessages, sendMessage } from '../controllers/farm_controller.js';
 
 const router = express.Router();
 
 
-router.post('/add-patient-farm', insertFarm);
-router.get('/get-patient-farms', gPatientFarms);
-router.delete('/delete-patient-farm', dPatientFarm);
+router.post("/sendmessage", sendMessage);
+router.get("/messages/:id", getMessages);
+
 
 
 export default router;

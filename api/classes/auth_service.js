@@ -2,6 +2,7 @@ import { clientDB } from "../../lib/database.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import mongoose from "mongoose";
+import { v4 as uuidv4 } from 'uuid'
 
 class AuthService {
     constructor() {
@@ -11,7 +12,7 @@ class AuthService {
 
     // Registro de nuevo usuario
     async register(userData) {
-        const { email, password, name } = userData;
+        const { email, password, name, typeAccount } = userData;
 
         // Verificar si el usuario ya existe
         const existingUser = await this.collection.findOne({ email });
@@ -21,26 +22,53 @@ class AuthService {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Crear nuevo usuario
-        const user = {
-            email,
-            password: hashedPassword,
-            name,
-            freePlan: true,
-            createdAt: new Date(),
+        if (typeAccount === "u") {
 
-        };
+            const user = {
+                email,
+                password: hashedPassword,
+                name,
+                sender_mongo_id: uuidv4(),
+                freePlan: true,
+                createdAt: new Date(),
+                typeAccount: "u"
 
-        // Guardar el usuario en la base de datos
-        await this.collection.insertOne(user);
+            };
 
-        // Generar y retornar el token JWT
-        const token = jwt.sign(
-            { email: user.email },
-            process.env.JWT_SECRET,
-            { expiresIn: '30d' } // El token expirará en 30 días
-        );
+            // Guardar el usuario en la base de datos
+            await this.collection.insertOne(user);
 
-        return { token };
+            // Generar y retornar el token JWT
+            const token = jwt.sign(
+                { email: user.email },
+                process.env.JWT_SECRET,
+                { expiresIn: '2d' } // El token expirará en 30 días
+            );
+
+            return { token };
+        } else {
+            const user = {
+                email,
+                password: hashedPassword,
+                name,
+                sender_mongo_id: uuidv4(),
+                freePlan: true,
+                createdAt: new Date(),
+                typeAccount: "b"
+            };
+
+            // Guardar el usuario en la base de datos
+            await this.collection.insertOne(user);
+
+            // Generar y retornar el token JWT
+            const token = jwt.sign(
+                { email: user.email },
+                process.env.JWT_SECRET,
+                { expiresIn: '2d' } // El token expirará en 30 días
+            );
+
+            return { token };
+        }
     }
 
     // Iniciar sesión
