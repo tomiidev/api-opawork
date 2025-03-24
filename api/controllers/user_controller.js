@@ -471,7 +471,7 @@ export const login = async (req, res) => {
         res.cookie('sessionToken', sessionToken, {
             httpOnly: true,
             secure: true, //cambiar a tru en prod,
-            sameSite: "Lax",
+            sameSite: "None",
 
             /* sameSite: "None", */
             domain: ".opawork.app",
