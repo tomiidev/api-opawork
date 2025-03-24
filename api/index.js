@@ -23,19 +23,21 @@ const allowedOrigins = [
     "https://auth.opawork.app",
     "https://negocios.opawork.app"
 ];
-app.use(
-    cors({
-        origin: (origin, callback) => {
-            if (!origin || allowedOrigins.includes(origin)) {
-                callback(null, origin); // 🔥 Devuelve dinámicamente el origen correcto
-            } else {
-                callback(new Error("Not allowed by CORS"));
-            }
-        },
-        credentials: true, // 🔥 Importante para enviar cookies en solicitudes
-        methods: "GET, POST, PUT, DELETE, OPTIONS",
-    })
-);
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+    }
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    
+    if (req.method === "OPTIONS") {
+      return res.status(200).end(); // ✅ Responde a las preflight requests
+    }
+  
+    next();
+  });
 /* app.options('*', cors()); */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -46,11 +48,7 @@ app.use((err, req, res, next) => {
     }
     next();
 });
-app.use((req, res, next) => {
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    next();
-  });
-  
+
 
 app.use('/api', userRoutes);
 app.use('/api', paymentsRoutes);
