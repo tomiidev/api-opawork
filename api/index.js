@@ -15,9 +15,27 @@ import cookieParser from "cookie-parser";
 config();
 
 const app = express();
-app.use(cors({
-    origin: ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176", "https://auth.opawork.app", "https://negocios.opawork.app"], methods: "GET, POST, PUT, DELETE, OPTIONS", credentials: true
-}));
+const allowedOrigins = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:5175",
+    "http://localhost:5176",
+    "https://auth.opawork.app",
+    "https://negocios.opawork.app"
+];
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, origin); // 🔥 Devuelve dinámicamente el origen correcto
+            } else {
+                callback(new Error("Not allowed by CORS"));
+            }
+        },
+        credentials: true, // 🔥 Importante para enviar cookies en solicitudes
+        methods: "GET, POST, PUT, DELETE, OPTIONS",
+    })
+);
 /* app.options('*', cors()); */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
