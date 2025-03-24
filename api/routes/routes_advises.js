@@ -1,5 +1,5 @@
 import express from 'express';
-import { addAdvise, applyToOffer, deletePatientResource, gAdvises, gAllAdvises, gAllFreelanceAdvises, gAppliesOfOffer, getAdviseById, gTitleAdvise } from '../controllers/advises_controller.js';
+import { addAdvise, applyToOffer, changeStatusOfApplie, deletePatientResource, gAdvises, gAllAdvises, gAllFreelanceAdvises, gAppliesOfOffer, getAdviseById, getAdvisesByEspeciality, gTitleAdvise } from '../controllers/advises_controller.js';
 import multer from 'multer';
 import path from 'path';
 import {  uploadInformation } from '../controllers/user_controller.js';
@@ -27,8 +27,10 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 router.post('/advise-information',addAdvise);
+router.post('/change status-of-applie',changeStatusOfApplie);
 router.get('/get-advises', gAdvises);
 router.get('/get-all-advises', gAllAdvises);
+router.get('/get-advises-by-especiality/:id', getAdvisesByEspeciality);
 router.post('/apply-offer', applyToOffer);
 router.get('/get-all-freelance-advises', gAllFreelanceAdvises);
 router.get('/get-advise-by-id/:id', getAdviseById);

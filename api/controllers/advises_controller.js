@@ -40,6 +40,34 @@ export const addAdvise = async (req, res) => {
         res.status(500).json({ message: 'Error al agregar los métodos de pago' });
     }
 };
+export const changeStatusOfApplie = async (req, res) => {
+    const token = req.cookies?.sessionToken;
+
+    try {
+        // Verificamos si el token está presente
+        if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        }
+        const { user } = req.boy;
+
+        // Decodificamos el token para obtener el _id del usuario
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+
+
+
+        // Llamamos al servicio para actualizar los métodos de pago
+        const r = await rService.changeStateOfApplie(decoded, user);
+        if (r.success) {
+            console.log(r)
+            return res.status(200).json({ data: r, message: "Avisos obtenidos" });
+        }
+
+    } catch (error) {
+        console.error('Error al agregar los métodos de pago:', error);
+        res.status(500).json({ message: 'Error al agregar los métodos de pago' });
+    }
+};
 export const gAdvises = async (req, res) => {
     const token = req.cookies?.sessionToken;
 
@@ -68,7 +96,30 @@ export const gAdvises = async (req, res) => {
         res.status(500).json({ message: 'Error al agregar los métodos de pago' });
     }
 };
-export const gAllAdvises = async (req, res) => {
+export const getAdvisesByEspeciality = async (req, res) => {
+  /*   const token = req.cookies?.sessionToken; */
+
+    try {
+        // Verificamos si el token está presente
+     /*    if (!token) {
+            return res.status(401).json({ error: 'No autorizado' });
+        } */
+
+        // Decodificamos el token para obtener el _id del usuario
+        const { id } = req.params
+        // Llamamos al servicio para actualizar los métodos de pago
+        const r = await rService.getAdvisesByEspeciality(id);
+        if (r.length > 0) {
+
+            return res.status(200).json({ data: r, message: "Avisos obtenidos" });
+        }
+
+    } catch (error) {
+        console.error('Error al agregar los métodos de pago:', error);
+        res.status(500).json({ message: 'Error al agregar los métodos de pago' });
+    }
+};
+/* export const gAllAdvises = async (req, res) => {
     const token = req.cookies?.sessionToken;
 
     try {
@@ -94,8 +145,34 @@ export const gAllAdvises = async (req, res) => {
         console.error('Error al agregar los métodos de pago:', error);
         res.status(500).json({ message: 'Error al agregar los métodos de pago' });
     }
-};
+}; */
+export const gAllAdvises = async (req, res) => {
+    try {
+        const token = req.cookies?.sessionToken;
+        let advises;
 
+        if (token) {
+            try {
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                advises = await rService.getAllUserAdvises(decoded);
+            } catch {
+                return res.status(401).json({ error: 'Token inválido o expirado' });
+            }
+        } else {
+            advises = await rService.getAllUserAdvisesWithOutID();
+        }
+        console.log(advises)
+        res.status(advises?.length > 0 ? 200 : 404).json({
+            data: advises || [],
+            message: advises?.length ? "Avisos obtenidos correctamente" : "No hay avisos disponibles",
+            userAuthenticated: !!token
+        });
+
+    } catch (error) {
+        console.error('Error al obtener los avisos:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+};
 export const gTitleAdvise = async (req, res) => {
     const token = req.cookies.sessionToken;
 
@@ -114,7 +191,7 @@ export const gTitleAdvise = async (req, res) => {
         const r = await rService.getTitleAdvise(id);
         const d = await rService.getTitleAdviseBusiness(id);
         console.log(r)
-        res.status(200).json({ data: {r:r,d:d}, message: "titulo obtenido" });
+        res.status(200).json({ data: { r: r, d: d }, message: "titulo obtenido" });
 
 
     } catch (error) {
@@ -181,20 +258,20 @@ export const gAllFreelanceAdvises = async (req, res) => {
     }
 };
 export const getAdviseById = async (req, res) => {
-    const token = req.cookies?.sessionToken;
+    /* const token = req.cookies?.sessionToken; */
 
     try {
         const { id } = req.params;
         // Verificamos si el token está presente
-        if (!token) {
-            return res.status(401).json({ error: 'No autorizado' });
-        }
+        /*     if (!token) {
+                return res.status(401).json({ error: 'No autorizado' });
+            } */
 
 
 
 
         // Llamamos al servicio para actualizar los métodos de pago
-        const r = await rService.getAdviseById(id);
+        const r = await rService.getAdviseByIdANDrelated(id);
         if (r._id) {
             console.log(r)
             return res.status(200).json({ data: r, message: "Aviso obtenidos" });
@@ -214,7 +291,7 @@ export const applyToOffer = async (req, res) => {
         if (!token) {
             return res.status(401).json({ error: 'No autorizado' });
         }
-        const { id } = req.body;
+        const { id, idbusiness } = req.body;
 
         if (!id) {
             return res.status(400).json({ message: "Faltan datos" });
@@ -229,8 +306,13 @@ export const applyToOffer = async (req, res) => {
         const result = await rService.applyOffer(decoded, id);
 
         if (result.modifiedCount > 0) {
-            /*   await sendEmail(decoded, send, r) */
-            return res.status(200).json({ data: result, message: "Aplicacion relizada" });
+            const advise = await rService.getAdviseById(idbusiness, id);
+            console.log(advise)
+            if (advise._id) {
+
+                await sendEmail(decoded, advise)
+                return res.status(200).json({ data: result, message: "Aplicacion relizada" });
+            }
         }
         res.status(400).json({ message: "errro" })
     } catch (error) {

@@ -47,6 +47,39 @@ class ResourceService {
 
     return aviso.length > 0 ? aviso[0].title : null;
   }
+  async changeStateOfApplie(decoded, user) {
+    try {
+      // Usamos $[<identifier>] para recorrer todo el array y actualizar los elementos que coincidan
+      const result = await this.collection.updateOne(
+        {
+          "_id": new ObjectId(decoded.id), // Buscamos el aviso correcto por ID 
+        },
+        {
+          $set: {
+            // Usamos el operador posicional para actualizar todos los elementos en applys que coincidan
+            "applys.$[elem].status": "seleccionado" // Actualizamos el estado del aplicante
+          }
+        },
+        {
+          // Usamos el arrayFilters para identificar los elementos dentro de applys que deben ser modificados
+          arrayFilters: [{ "elem.userId": new ObjectId(user) }]
+        }
+      );
+
+      if (result.modifiedCount > 0) {
+        console.log('Estado actualizado correctamente');
+        return { success: true, message: 'Estado del aplicante actualizado' };
+      } else {
+        console.log('No se encontró el aplicante o no se hizo ninguna modificación');
+        return { success: false, message: 'No se encontró el aplicante' };
+      }
+    } catch (err) {
+      console.error('Error al actualizar el estado del aplicante:', err);
+      return { success: false, message: 'Hubo un error al actualizar el estado' };
+    }
+  }
+
+
   async gAppliesOfOffer(decoded, id) {
     try {
       const userId = new ObjectId(decoded.id);
@@ -157,6 +190,33 @@ class ResourceService {
     return res;
 
   }
+  async getAdvisesByEspeciality(esp) {
+    const regexEsp = new RegExp(esp.split(' ').join('.*'), 'i'); // 'i' para hacerlo insensible a mayúsculas/minúsculas
+
+    // Buscar usuario por email
+    const res = await this.collection.find({
+      especialities: { $elemMatch: { $regex: regexEsp } }
+    }).toArray();
+    if (res.length === 0) {
+      return { message: "No se encontraron avisos." };
+    }
+    return res;
+
+  }
+
+
+  async getAdviseById(idbusiness, id) {
+    // Buscar usuario por email
+    const res = await this.collection.findOne({
+      _id: new ObjectId(id), bussinesId: new ObjectId(idbusiness)
+    })
+
+    if (!res._id) {
+      return { message: "No se encontro aviso." };
+    }
+    return res;
+
+  }
   async getFreelanceAdvises(decoded) {
     // Buscar usuario por email
     const res = await this.collection.find({
@@ -193,15 +253,33 @@ class ResourceService {
       console.log(res);
       return res
     } */
+  async getAllUserAdvisesWithOutID() {
+
+
+    const res = await this.collection.find().toArray()
+
+    if (res.length < 0) {
+      return { message: "No se encontraron avisos." };
+    }
+
+ 
+    return res;
+  }
   async getAllUserAdvises(decoded) {
     console.log(decoded);
 
     const res = await this.collection.aggregate([
       {
         $match: {
+          // Busca al menos una coincidencia en especialities
+          especialities: { $in: decoded.especialities },
+
+          // Excluye si el usuario ya aplicó
           applys: {
-            $not: { $elemMatch: { userId: new ObjectId(decoded.id) } }
-          } // Excluir avisos donde applys contenga el userId de decoded.id
+            $not: {
+              $elemMatch: { userId: new ObjectId(decoded.id) }
+            }
+          }
         }
       },
       {
@@ -301,7 +379,7 @@ class ResourceService {
      return res[0]; 
    }
     */
-  async getAdviseById(id) {
+  async getAdviseByIdANDrelated(id) {
     console.log(id);
 
     const res = await this.collection.aggregate([

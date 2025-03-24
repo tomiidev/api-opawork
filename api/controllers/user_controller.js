@@ -132,6 +132,7 @@ export const checkAuth = async (req, res) => {
                 phone: decoded.phone,
                 name: decoded.name,
                 description: decoded.description,
+                especialities: decoded.especialities,
                 typeAccount: decoded.typeAccount,
                 sender_mongo_id: decoded.sender_mongo_id
 
@@ -454,7 +455,8 @@ export const login = async (req, res) => {
                 phone: user.phone,
                 description: user.description,
                 typeAccount: user.typeAccount,
-                sender_mongo_id: user.sender_mongo_id
+                sender_mongo_id: user.sender_mongo_id,
+                especialities: user.especialities,
                 /*      nombre: user.nombre, */
                 // Puedes agregar más datos aquí si es necesario
             },
@@ -471,8 +473,8 @@ export const login = async (req, res) => {
             secure: true, //cambiar a tru en prod,
             sameSite: "None",
 
-            /* sameSite: "None",
-            domain: ".opawork.app", */
+            /* sameSite: "None", */
+            domain: ".opawork.app",
             path: "/", // Disponible en todas las rutas
             maxAge: 30 * 24 * 60 * 60 * 1000
         });
