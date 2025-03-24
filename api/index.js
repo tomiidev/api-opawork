@@ -46,7 +46,11 @@ app.use((err, req, res, next) => {
     }
     next();
 });
-
+app.use((req, res, next) => {
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    next();
+  });
+  
 
 app.use('/api', userRoutes);
 app.use('/api', paymentsRoutes);
