@@ -234,7 +234,7 @@ export async function sendEmailSelected(user, advise) {
         const mailOptions = {
             from: process.env.MAIL_USERNAME,
             to: user.email,
-            subject: "Postulación exitosa",
+            subject: "Te han seleccionado",
             html
         };
 
