@@ -218,6 +218,34 @@ export async function sendEmail(user, advise) {
         throw new Error("Error al enviar el correo");
     }
 }
+export async function sendEmailSelected(user, advise) {
+    try {
+        // Crear transportador de nodemailer
+        const transporter = await createTransporter();
+
+        const html = `
+                <p>Hola ${user.name},</p>
+                <p>Respecto a tu postulación a ${advise.title}</p>
+                <p>¡Te seleccionaron, mucha suerte con tu nuevo proyecto!</p>
+                <p>Equipo Opawork.</p>
+            `;
+
+        // Opciones de correo
+        const mailOptions = {
+            from: process.env.MAIL_USERNAME,
+            to: user.email,
+            subject: "Postulación exitosa",
+            html
+        };
+
+        // Enviar correo
+        const info = await transporter.sendMail(mailOptions);
+        console.log("Correo enviado:", info.messageId);
+    } catch (error) {
+        console.error("Error al enviar el correo:", error);
+        throw new Error("Error al enviar el correo");
+    }
+}
 export async function sendEmailWithCredentialToPatient(patient, tempPassword) {
 
     try {

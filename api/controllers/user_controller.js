@@ -176,13 +176,17 @@ export const logout = async (req, res) => {
         if (!token) {
             return res.status(401).json({ error: 'No autorizado' });
         }
-
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = userService.getUser(decoded.id)
         // Limpiar la cookie 'sessionToken'
+        if (!user) {
+            throw "usuario no encontrado"
+        }
         res.clearCookie('sessionToken', {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',  // Asegurarse de usar 'secure' solo en producción
-            sameSite: "Lax",
-            /*  domain: ".opawork.app", */ // Habilita el uso en todos los subdominios
+            secure: true,  // Asegurarse de usar 'secure' solo en producción
+            sameSite: user.typeAccount === "u" ? "Strict" : "None",
+            domain: ".opawork.app",  // Habilita el uso en todos los subdominios
             path: "/", // Disponible en todas las rutas
             maxAge: 0  // La cookie se eliminará inmediatamente
         });
@@ -471,10 +475,10 @@ export const login = async (req, res) => {
         res.cookie('sessionToken', sessionToken, {
             httpOnly: true,
             secure: true, //cambiar a tru en prod,
-            sameSite: "None",
+            sameSite: user.typeAccount === "u" ? "Strict" : "None",
 
             /* sameSite: "None", */
-            domain: ".opawork.app",
+            /* domain: ".opawork.app", */
             path: "/", // Disponible en todas las rutas
             maxAge: 30 * 24 * 60 * 60 * 1000
         });

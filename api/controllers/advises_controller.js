@@ -1,8 +1,10 @@
 import jwt from "jsonwebtoken"
 import ResourcetService from "../classes/advises_service.js";
+import UserService from "../classes/user_service.js";
 import { uploadFileToS3 } from "../s3/s3.js";
-import { sendEmail } from "../nodemailer/config.js";
+import { sendEmail, sendEmailSelected } from "../nodemailer/config.js";
 const rService = new ResourcetService()
+const uService = new UserService()
 // Registro de usuario
 
 export const addAdvise = async (req, res) => {
@@ -48,7 +50,7 @@ export const changeStatusOfApplie = async (req, res) => {
         if (!token) {
             return res.status(401).json({ error: 'No autorizado' });
         }
-        const { user } = req.body;
+        const { user, adviseId } = req.body;
 
         // Decodificamos el token para obtener el _id del usuario
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -58,9 +60,13 @@ export const changeStatusOfApplie = async (req, res) => {
 
         // Llamamos al servicio para actualizar los métodos de pago
         const r = await rService.changeStateOfApplie(decoded, user);
+        const a = await rService.getAdviseById(decoded, adviseId);
         if (r.success) {
-            console.log(r)
-            return res.status(200).json({ data: r, message: "Avisos obtenidos" });
+            const user = await uService.getUser(user)
+            if (user._id && a._id) {
+                await sendEmailSelected(user, a)
+                return res.status(200).json({ data: r, message: "Avisos obtenidos" });
+            }
         }
 
     } catch (error) {
@@ -97,13 +103,13 @@ export const gAdvises = async (req, res) => {
     }
 };
 export const getAdvisesByEspeciality = async (req, res) => {
-  /*   const token = req.cookies?.sessionToken; */
+    /*   const token = req.cookies?.sessionToken; */
 
     try {
         // Verificamos si el token está presente
-     /*    if (!token) {
-            return res.status(401).json({ error: 'No autorizado' });
-        } */
+        /*    if (!token) {
+               return res.status(401).json({ error: 'No autorizado' });
+           } */
 
         // Decodificamos el token para obtener el _id del usuario
         const { id } = req.params
