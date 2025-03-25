@@ -62,8 +62,8 @@ export const changeStatusOfApplie = async (req, res) => {
         const r = await rService.changeStateOfApplie(decoded, user);
         const a = await rService.getAdviseById(decoded, adviseId);
         if (r.success) {
-            const user = await uService.getUser(user)
-            if (user._id && a._id) {
+            const guser = await uService.getUser(user)
+            if (guser._id && a._id) {
                 await sendEmailSelected(user, a)
                 return res.status(200).json({ data: r, message: "Avisos obtenidos" });
             }
