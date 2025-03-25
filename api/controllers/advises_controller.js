@@ -48,7 +48,7 @@ export const changeStatusOfApplie = async (req, res) => {
         if (!token) {
             return res.status(401).json({ error: 'No autorizado' });
         }
-        const { user } = req.boy;
+        const { user } = req.body;
 
         // Decodificamos el token para obtener el _id del usuario
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
