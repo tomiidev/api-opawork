@@ -52,7 +52,7 @@ class ResourceService {
       // Usamos $[<identifier>] para recorrer todo el array y actualizar los elementos que coincidan
       const result = await this.collection.updateOne(
         {
-          "_id": new ObjectId(decoded.id), // Buscamos el aviso correcto por ID 
+          "bussinesId": new ObjectId(decoded.id), // Buscamos el aviso correcto por ID 
         },
         {
           $set: {
