@@ -478,7 +478,7 @@ export const login = async (req, res) => {
             sameSite: user.typeAccount === "u" ? "Strict" : "None",
 
             /* sameSite: "None", */
-            /* domain: ".opawork.app", */
+             domain: ".opawork.app", 
             path: "/", // Disponible en todas las rutas
             maxAge: 30 * 24 * 60 * 60 * 1000
         });
