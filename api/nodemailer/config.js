@@ -220,6 +220,7 @@ export async function sendEmail(user, advise) {
 }
 export async function sendEmailSelected(user, advise) {
     try {
+        console.log(user, advise)
         // Crear transportador de nodemailer
         const transporter = await createTransporter();
 
