@@ -27,7 +27,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 router.post('/advise-information',addAdvise);
-router.post('/change status-of-applie',changeStatusOfApplie);
+router.post('/change-status-of-applie',changeStatusOfApplie);
 router.get('/get-advises', gAdvises);
 router.get('/get-all-advises', gAllAdvises);
 router.get('/get-advises-by-especiality/:id', getAdvisesByEspeciality);
